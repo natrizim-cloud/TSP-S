@@ -1,0 +1,2127 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23090c12'/><rect x='4' y='4' width='24' height='24' fill='%23f0f4f8'/><rect x='12' y='12' width='8' height='8' fill='%23cc0000'/></svg>">
+<title>Платформа тренувань · ТСП «ЩИТ» · v2.0</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #090c12;
+  --panel: #0d1520;
+  --border: #1a3050;
+  --red: #cc2222;
+  --cyan: #00e0ff;
+  --text: #c0d0e0;
+  --dim: #3a6a8a;
+  --dimmer: #1a3a5a;
+}
+body {
+  background: var(--bg);
+  font-family: 'Courier New', monospace;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+/* === SHARED HEADER === */
+.platform-header {
+  text-align: center;
+  margin-bottom: 8px;
+  width: 100%;
+  max-width: 1400px;
+}
+.branding {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.branding img {
+  width: 44px; height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(180,0,0,0.6));
+}
+.branding-title { font-size: 16px; font-weight: bold; letter-spacing: 3px; color: var(--red); line-height: 1.1; }
+.branding-sub { font-size: 8px; letter-spacing: 2px; color: var(--dimmer); }
+
+/* === BACK BUTTON === */
+#back-btn {
+  display: none;
+  position: fixed;
+  top: 10px; left: 10px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  z-index: 100;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+#back-btn:hover, #back-btn:active { background: #0d2040; color: var(--cyan); border-color: var(--cyan); }
+
+/* === SCREENS === */
+.screen { display: none; width: 100%; max-width: 1400px; }
+.screen.active { display: block; }
+
+/* === MENU === */
+#screen-menu { text-align: center; padding: 20px 0; }
+.menu-title {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--dimmer);
+  margin-bottom: 32px;
+  text-transform: uppercase;
+}
+.menu-grid {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 16px;
+  align-items: flex-start;
+}
+.menu-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 220px;
+  max-width: 280px;
+}
+.menu-card--tall {
+  flex: 1;
+}
+.menu-card {
+  width: 280px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px 20px;
+  cursor: pointer;
+  background: var(--panel);
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.menu-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--red);
+  transform: scaleX(0);
+  transition: transform 0.25s;
+}
+.menu-card:hover::before, .menu-card:active::before { transform: scaleX(1); }
+.menu-card:hover, .menu-card:active {
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(0,180,220,0.1);
+  transform: translateY(-2px);
+}
+.card-num {
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--border);
+  line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: -2px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+.card-desc {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--dim);
+  line-height: 1.8;
+}
+.card-tag {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 3px 8px;
+  border: 1px solid var(--dimmer);
+  color: var(--dimmer);
+  font-size: 8px;
+  letter-spacing: 2px;
+  border-radius: 2px;
+}
+.menu-version {
+  margin-top: 40px;
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: var(--dimmer);
+}
+
+/* === STATS BAR (shared) === */
+#stats { display: flex; align-items: center; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 4px; }
+#timer { font-size: 32px; font-weight: bold; letter-spacing: 2px; color: #1a3040; transition: color 0.3s; }
+#timer.running { color: var(--cyan); }
+#timer.done { color: #00ffaa; }
+#timer.dead { color: var(--red); }
+#target { font-size: 13px; letter-spacing: 1px; color: var(--dim); }
+#target span { color: var(--cyan); font-size: 20px; font-weight: bold; }
+#target.done { color: #00ffaa; font-weight: bold; }
+#target.dead { color: var(--red); font-weight: bold; }
+
+/* === OBS TABLE === */
+#table-container { position: relative; width: 100%; max-width: 1400px; }
+#canvas-wrap {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,80,160,0.15);
+  width: 100%;
+  position: relative;
+}
+#tbl { display: block; width: 100%; height: auto; background: var(--panel); }
+#touch-overlay {
+  position: absolute; inset: 0; z-index: 5;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* === PILOT GAME === */
+#pilot-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+#pilot-arena-wrap {
+  position: relative;
+  width: 100%;
+  max-width: min(606px, 100%);
+  border: none;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  cursor: crosshair;
+}
+#pilot-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #f0f4f8;
+}
+#pilot-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(9,12,18,0.97);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: 1px;
+}
+#pilot-overlay.hidden { display: none; }
+#pilot-overlay-logo { width: 70px; height: 70px; object-fit: contain; filter: drop-shadow(0 0 18px rgba(200,0,0,0.9)); margin-bottom: 14px; }
+#pilot-play-btn {
+  margin-top: 20px;
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  padding: 16px 36px;
+  border: 2px solid var(--cyan);
+  border-radius: 4px;
+}
+#pilot-result {
+  display: none;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--red);
+  margin-top: 10px;
+  text-align: center;
+}
+#pilot-result.visible { display: block; }
+#pilot-hint-text {
+  margin-top: 8px;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--dimmer);
+}
+
+/* === SHARED CONTROLS === */
+.controls-bar {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 1400px;
+}
+button {
+  padding: 8px 22px;
+  background: transparent;
+  border: 1px solid #2a5a8a;
+  color: #6aa8cc;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+button:hover, button:active { background: #0d2040; color: var(--cyan); border-color: var(--cyan); }
+#history { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.hist-item { padding: 3px 8px; border: 1px solid #1a4060; color: #4a8aaa; font-size: 10px; border-radius: 2px; }
+#hint { margin-top: 6px; font-size: 9px; color: #1e3a52; text-align: center; max-width: 500px; line-height: 1.7; }
+#chart-wrap { display: none; margin-top: 14px; width: 100%; max-width: 1400px; }
+#chart { border: 1px solid var(--border); border-radius: 3px; display: block; width: 100%; height: auto; }
+
+/* === START OVERLAY (obs) === */
+#start-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(9,12,18,0.97);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10;
+  border-radius: 3px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#start-overlay.hidden { display: none; }
+#overlay-logo { width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(200,0,0,0.9)); margin-bottom: 16px; }
+#play-tap {
+  margin-top: 24px; font-family: 'Courier New', monospace;
+  font-size: 22px; font-weight: bold; letter-spacing: 3px; color: var(--cyan);
+  text-align: center; padding: 20px 40px; border: 2px solid var(--cyan); border-radius: 4px;
+}
+#overlay-hint { margin-top: 12px; font-size: 9px; letter-spacing: 3px; color: #2a5a7a; }
+#overlay-mode { margin-top: 6px; font-size: 10px; color: #1a6a4a; letter-spacing: 1px; }
+
+@media(max-width:600px) {
+  #timer { font-size: 22px; }
+  #target span { font-size: 16px; }
+  #overlay-logo, #pilot-overlay-logo { width: 48px; height: 48px; }
+  .branding img { width: 32px; height: 32px; }
+  .branding-title { font-size: 13px; }
+  .menu-grid { flex-direction: column; align-items: center; padding: 0 8px; gap: 10px; }
+  .menu-col { max-width: 100%; width: 100%; min-width: unset; }
+  .menu-card { width: 100%; max-width: 100%; }
+  #pilot-play-btn { font-size: 16px; padding: 12px 24px; }
+  .platform-header { margin-bottom: 4px; }
+  #stats { gap: 10px; }
+}
+#tbl g { cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+#tbl { touch-action: manipulation; -webkit-user-select: none; }
+#tbl-chaos g { cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+#tbl-abyss g { cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+
+/* === PILOT VIEWPORT FIT === */
+#pilot-wrap {
+  /* Use JS-calculated --pilot-field-size CSS var */
+}
+.pilot-field {
+  width: var(--pilot-field-size, 606px);
+  max-width: 100%;
+}
+</style>
+</head>
+<body>
+
+<button id="back-btn" onclick="goMenu()">← МЕНЮ</button>
+
+<!-- SHARED HEADER -->
+<div class="platform-header">
+  <div class="branding">
+    <img id="hdr-logo" src="">
+    <div>
+      <div class="branding-title">ТСП «ЩИТ»</div>
+      <div class="branding-sub" id="hdr-sub">ТРЕНУВАЛЬНА ПЛАТФОРМА · v2.0</div>
+    </div>
+  </div>
+  <div id="stats" style="display:none">
+    <div id="timer">00.00с</div>
+    <div id="target">&nbsp;</div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: MENU ===== -->
+<div id="screen-menu" class="screen active">
+  <div class="menu-title">Оберіть тренажер</div>
+  <div class="menu-grid">
+
+    <div class="menu-col">
+
+      <div class="menu-card" onclick="showTest('obs')">
+        <div class="card-num">01</div>
+        <div class="card-title">СПОСТЕРЕЖЛИВІСТЬ</div>
+        <div class="card-desc">
+          Знайди числа від 1 до 100<br>
+          у правильній послідовності.<br>
+          Тримай погляд у центрі —<br>
+          рухаються лише очі.
+        </div>
+        <div class="card-tag">БАЗОВА ВЕРСІЯ</div>
+      </div>
+
+      <div class="menu-card" onclick="showTest('chaos')">
+        <div class="card-num">03</div>
+        <div class="card-title">ХАОС</div>
+        <div class="card-desc">
+          Ячейки переливають кольорами.<br>
+          Цифра іноді зливається з фоном —<br>
+          підвищена складність.
+        </div>
+        <div class="card-tag">УСКЛАДНЕНА ВЕРСІЯ</div>
+      </div>
+
+      <div class="menu-card" onclick="showTest('abyss')">
+        <div class="card-num">04</div>
+        <div class="card-title">БЕЗОДНЯ</div>
+        <div class="card-desc">
+          Тільки для найсміливіших.<br>
+          Якщо пройшов — розкажи нам.
+        </div>
+        <div class="card-tag">МАКСИМАЛЬНА СКЛАДНІСТЬ</div>
+      </div>
+
+    </div>
+
+    <div class="menu-col">
+
+      <div class="menu-card menu-card--tall" onclick="showTest('pilot')">
+        <div class="card-num">02</div>
+        <div class="card-title">ТЕСТ ПІЛОТА</div>
+        <div class="card-desc">
+          Утримуй червоний квадрат<br>
+          мишею в безпечній зоні.<br>
+          Уникай синіх об'єктів —<br>
+          вони рухаються хвилями.<br><br>
+          Кажуть, американські військові<br>
+          пілоти тримають понад 2 хвилини.
+        </div>
+        <div class="card-tag">РЕАКЦІЯ · СТЕЖЕННЯ</div>
+      </div>
+
+    </div>
+
+  </div>
+  <div class="menu-version">v2.0 · ТСП «ЩИТ» · 2026</div>
+  <!-- prank card inside menu screen so it hides with menu -->
+  <div id="prank-card-wrap" style="margin-top:12px;width:100%;max-width:580px;padding:0 16px;">
+    <div class="menu-card" onclick="showTest('prank')" style="border-color:#1a1a1a;opacity:0.55;transition:all 0.3s;" id="prank-card"
+      onmouseenter="this.style.opacity='1';this.style.borderColor='#cc2222'"
+      onmouseleave="this.style.opacity='0.55';this.style.borderColor='#1a1a1a'"
+      ontouchstart="this.style.opacity='1'"
+    >
+      <div class="card-num" style="color:#1a1a1a;">05</div>
+      <div class="card-title" style="color:#cc2222;letter-spacing:1px;">ДЛЯ УПЕРТИХ В КРАЙ</div>
+      <div class="card-desc" style="color:#2a2a2a;">
+        Не рекомендовано.<br>
+        Стабільність не гарантована.
+      </div>
+      <div class="card-tag" style="border-color:#1a1a1a;color:#1a1a1a;">⚠ ЕКСПЕРИМЕНТ</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: OBSERVATION TABLE ===== -->
+<div id="screen-obs" class="screen">
+  <div id="table-container">
+    <div id="start-overlay" style="cursor:pointer;">
+      <img id="overlay-logo" src="">
+      <div id="play-tap" style="margin-top:20px;font-family:'Courier New',monospace;font-size:24px;font-weight:bold;letter-spacing:4px;color:#00e0ff;padding:18px 36px;border:2px solid #00e0ff;border-radius:4px;">▶ СТАРТ</div>
+      <div id="overlay-hint" style="margin-top:14px;font-size:10px;letter-spacing:3px;color:#2a5a7a;">НАТИСНИ БУДЬ-ДЕ</div>
+      <div style="margin-top:6px;font-size:9px;letter-spacing:2px;color:#1a3a5a;font-family:'Courier New',monospace;">v2.0 · ТСП «ЩИТ» · 2026</div>
+      <div id="overlay-mode" style="margin-top:4px;font-size:10px;color:#1a4a2a;letter-spacing:1px;"></div>
+    </div>
+    <div id="canvas-wrap" style="position:relative;">
+      <svg id="tbl" style="display:block;width:100%;height:auto;background:#0d1520;"></svg>
+      <div id="touch-overlay" style="position:absolute;inset:0;z-index:5;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;"></div>
+    </div>
+  </div>
+  <div class="controls-bar">
+    <button onclick="restart()" ontouchend="event.preventDefault();restart();">&#8635; НОВА ТАБЛИЦЯ</button>
+    <div id="history"></div>
+  </div>
+  <div id="hint">
+    Знайди числа від <b style="color:#4a8aaa">1</b> до
+    <b style="color:#4a8aaa"><span id="total-hint">?</span></b> по порядку.
+    Тримай погляд у центрі — рухаються лише очі.
+  </div>
+  <div id="chart-wrap"><canvas id="chart"></canvas></div>
+</div>
+
+<!-- ===== SCREEN: PILOT TEST ===== -->
+<div id="screen-pilot" class="screen">
+  <div id="pilot-wrap">
+    <div id="pilot-arena-wrap">
+      <canvas id="pilot-canvas"></canvas>
+      <div id="pilot-overlay">
+        <img id="pilot-overlay-logo" src="">
+        <div id="pilot-play-btn">▶ СТАРТ</div>
+        <div id="pilot-result"></div>
+        <div id="pilot-hint-text">НАТИСНИ ДЛЯ ПОЧАТКУ</div>
+      </div>
+    </div>
+    <!-- MOBILE TOUCHPAD -->
+    <div id="pilot-touchpad-wrap" style="display:none; width:100%; max-width:606px; margin-top:6px;">
+      <div style="font-size:8px; letter-spacing:2px; color:#1a3a5a; text-align:center; margin-bottom:3px;">КЕРУВАННЯ · ТОРКНИСЬ ТУТ</div>
+      <canvas id="pilot-touchpad" style="display:block; width:100%; height:auto; border:1px solid #1a3050; border-radius:2px; touch-action:none;"></canvas>
+    </div>
+    <div class="controls-bar">
+      <button onclick="pilotReset()">&#8635; НОВИЙ РАУНД</button>
+      <div id="pilot-history"></div>
+    </div>
+    <div id="hint" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: ABYSS OBS ===== -->
+<div id="screen-abyss" class="screen">
+  <div id="table-container-abyss">
+    <div id="start-overlay-abyss" style="cursor:pointer; position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(9,12,18,0.97); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:10; border-radius:3px;">
+      <img src="" id="overlay-logo-abyss" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(200,0,0,0.9));margin-bottom:16px;">
+      <div style="margin-top:20px;font-family:'Courier New',monospace;font-size:24px;font-weight:bold;letter-spacing:4px;color:#00e0ff;padding:18px 36px;border:2px solid #00e0ff;border-radius:4px;">▶ СТАРТ</div>
+      <div style="margin-top:14px;font-size:10px;letter-spacing:3px;color:#2a5a7a;">НАТИСНИ БУДЬ-ДЕ</div>
+      <div style="margin-top:4px;font-size:9px;letter-spacing:2px;color:#1a3a5a;font-family:'Courier New',monospace;">БЕЗОДНЯ · МАКСИМУМ</div>
+    </div>
+    <div id="canvas-wrap-abyss" style="position:relative;border:1px solid #1a3050;border-radius:3px;overflow:hidden;box-shadow:0 0 40px rgba(0,80,160,0.15);width:100%;">
+      <svg id="tbl-abyss" style="display:block;width:100%;height:auto;background:#0d1520;"></svg>
+      <div id="touch-overlay-abyss" style="position:absolute;inset:0;z-index:5;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;"></div>
+    </div>
+  </div>
+  <div class="controls-bar">
+    <button onclick="restartAbyss()" ontouchend="event.preventDefault();restartAbyss();">&#8635; НОВА ТАБЛИЦЯ</button>
+    <div id="history-abyss"></div>
+  </div>
+  <div style="margin-top:4px;font-size:9px;color:#2a3a4a;text-align:center;letter-spacing:1px;" id="abyss-regen-hint">Таблиця перемішається через <span id="abyss-next-regen">?</span>с</div>
+  <div style="margin-top:4px;font-size:9px;color:#1e3a52;text-align:center;max-width:500px;line-height:1.7;">
+    Числа від <b style="color:#4a8aaa">1</b> до <b style="color:#4a8aaa"><span id="total-hint-abyss">?</span></b> — таблиця перемішується під час проходження.
+  </div>
+  <div id="chart-wrap-abyss" style="display:none;margin-top:14px;width:100%;max-width:1400px;"><canvas id="chart-abyss"></canvas></div>
+</div>
+
+<!-- ===== SCREEN: CHAOS OBS ===== -->
+<div id="screen-chaos" class="screen">
+  <div id="table-container-chaos">
+    <div id="start-overlay-chaos" style="cursor:pointer; position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(9,12,18,0.97); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:10; border-radius:3px;">
+      <img src="" id="overlay-logo-chaos" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(200,0,0,0.9));margin-bottom:16px;">
+      <div style="margin-top:20px;font-family:'Courier New',monospace;font-size:24px;font-weight:bold;letter-spacing:4px;color:#00e0ff;padding:18px 36px;border:2px solid #00e0ff;border-radius:4px;">▶ СТАРТ</div>
+      <div style="margin-top:14px;font-size:10px;letter-spacing:3px;color:#2a5a7a;">НАТИСНИ БУДЬ-ДЕ</div>
+      <div style="margin-top:4px;font-size:9px;letter-spacing:2px;color:#1a3a5a;font-family:'Courier New',monospace;">УСКЛАДНЕНА · ХАОС</div>
+    </div>
+    <div id="canvas-wrap-chaos" style="position:relative;border:1px solid #1a3050;border-radius:3px;overflow:hidden;box-shadow:0 0 40px rgba(0,80,160,0.15);width:100%;">
+      <svg id="tbl-chaos" style="display:block;width:100%;height:auto;background:#0d1520;"></svg>
+      <div id="touch-overlay-chaos" style="position:absolute;inset:0;z-index:5;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;"></div>
+    </div>
+  </div>
+  <div class="controls-bar">
+    <button onclick="restartChaos()" ontouchend="event.preventDefault();restartChaos();">&#8635; НОВА ТАБЛИЦЯ</button>
+    <div id="history-chaos"></div>
+  </div>
+  <div id="hint-chaos" style="margin-top:6px;font-size:9px;color:#1e3a52;text-align:center;max-width:500px;line-height:1.7;">
+    Знайди числа від <b style="color:#4a8aaa">1</b> до
+    <b style="color:#4a8aaa"><span id="total-hint-chaos">?</span></b> по порядку.
+    Цифри зливаються з фоном — будь уважним.
+  </div>
+  <div id="chart-wrap-chaos" style="display:none;margin-top:14px;width:100%;max-width:1400px;"><canvas id="chart-chaos"></canvas></div>
+</div>
+
+<!-- ===== SCREEN: PRANK ===== -->
+<div id="screen-prank" class="screen">
+  <div id="table-container-prank" style="position:relative;width:100%;max-width:1400px;">
+    <div id="start-overlay-prank" style="cursor:pointer; position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(9,12,18,0.97); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:10; border-radius:3px;">
+      <img src="" id="overlay-logo-prank" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(200,0,0,0.9));margin-bottom:16px;">
+      <div style="margin-top:20px;font-family:'Courier New',monospace;font-size:24px;font-weight:bold;letter-spacing:4px;color:#cc2222;padding:18px 36px;border:2px solid #cc2222;border-radius:4px;">▶ СТАРТ</div>
+      <div style="margin-top:14px;font-size:10px;letter-spacing:3px;color:#2a1a1a;">НАТИСНИ БУДЬ-ДЕ</div>
+      <div style="margin-top:4px;font-size:9px;letter-spacing:2px;color:#1a1a2a;font-family:'Courier New',monospace;">ДЛЯ УПЕРТИХ В КРАЙ · v??</div>
+    </div>
+    <div id="canvas-wrap-prank" style="position:relative;border:1px solid #1a3050;border-radius:3px;overflow:hidden;box-shadow:0 0 40px rgba(0,80,160,0.15);width:100%;">
+      <svg id="tbl-prank" style="display:block;width:100%;height:auto;background:#0d1520;"></svg>
+      <div id="touch-overlay-prank" style="position:absolute;inset:0;z-index:5;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;"></div>
+      <!-- The floating 4 -->
+      <div id="prank-four" style="display:none;position:absolute;z-index:8;cursor:pointer;font-family:'Courier New',monospace;font-weight:bold;text-align:center;pointer-events:auto;transition:opacity 4s ease-in, top 3s ease-out, left 3s ease-out;-webkit-tap-highlight-color:transparent;"></div>
+    </div>
+  </div>
+  <div class="controls-bar">
+    <button onclick="restartPrank()" ontouchend="event.preventDefault();restartPrank();">&#8635; НОВА ТАБЛИЦЯ</button>
+    <div id="history-prank"></div>
+  </div>
+  <div style="margin-top:4px;font-size:9px;color:#1e3a52;text-align:center;max-width:500px;line-height:1.7;">
+    Числа від <b style="color:#4a8aaa">1</b> до <b style="color:#4a8aaa"><span id="total-hint-prank">?</span></b> по порядку.
+  </div>
+  <!-- Prank message overlay -->
+  <div id="prank-msg" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(9,12,18,0.98);display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+    <div style="font-size:40px;margin-bottom:20px;">🤖</div>
+    <div style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;color:#3a6a8a;margin-bottom:16px;">АНИМА · ПОВІДОМЛЕННЯ</div>
+    <div id="prank-msg-text" style="font-family:'Courier New',monospace;font-size:22px;font-weight:bold;color:#00e0ff;text-align:center;letter-spacing:2px;line-height:1.6;max-width:400px;"></div>
+    <div style="margin-top:40px;font-size:9px;color:#1a3a5a;letter-spacing:3px;" id="prank-msg-sub"></div>
+    <button onclick="prankDismiss()" style="margin-top:30px;font-size:12px;letter-spacing:3px;">ПОКАЗАЛОСЬ</button>
+  </div>
+</div>
+
+<script>
+// ===================== LOGO =====================
+const LOGO_SRC = 'data:image/webp;base64,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';
+document.getElementById('hdr-logo').src = LOGO_SRC;
+document.getElementById('overlay-logo').src = LOGO_SRC;
+document.getElementById('pilot-overlay-logo').src = LOGO_SRC;
+document.getElementById('overlay-logo-chaos').src = LOGO_SRC;
+  document.getElementById('overlay-logo-abyss').src = LOGO_SRC;
+  document.getElementById('overlay-logo-prank').src = LOGO_SRC;
+
+// ===================== NAVIGATION =====================
+function showTest(name) {
+  document.getElementById('screen-menu').classList.remove('active');
+  document.getElementById('screen-obs').classList.remove('active');
+  document.getElementById('screen-pilot').classList.remove('active');
+  document.getElementById('screen-chaos').classList.remove('active');
+  document.getElementById('screen-abyss').classList.remove('active');
+  document.getElementById('screen-prank').classList.remove('active');
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('back-btn').style.display = 'block';
+  document.getElementById('stats').style.display = (name === 'obs' || name === 'chaos' || name === 'abyss' || name === 'prank') ? 'flex' : 'none';
+  document.getElementById('hdr-sub').textContent =
+    name === 'obs' ? 'ТРЕНАЖЕР СПОСТЕРЕЖЛИВОСТІ · v2.0' :
+    name === 'pilot' ? 'ТЕСТ ПІЛОТА · v2.0' :
+    name === 'chaos' ? 'ХАОС · УСКЛАДНЕНА ВЕРСІЯ · v2.0' :
+    name === 'abyss' ? 'БЕЗОДНЯ · МАКСИМАЛЬНА СКЛАДНІСТЬ · v2.0' :
+    name === 'prank' ? 'ДЛЯ УПЕРТИХ В КРАЙ · v??' : 'ТРЕНУВАЛЬНА ПЛАТФОРМА · v2.0';
+  if (name === 'obs') { initObs(); }
+  if (name === 'pilot') { initPilot(); }
+  if (name === 'chaos') { initChaos(); }
+  if (name === 'abyss') { initAbyss(); }
+  if (name === 'prank') { initPrank(); }
+}
+function goMenu() {
+  // Full reset — no pausing, everything starts fresh next time
+
+  // OBS reset
+  clearInterval(timerID); timerID = null;
+  next=1; phase='idle'; elapsed=0; wrong=-1; correct=-1; clickTimes=[];
+  obsHistory=[];
+  document.getElementById('timer').textContent='00.00с';
+  document.getElementById('timer').className='';
+  document.getElementById('target').innerHTML='&nbsp;';
+  document.getElementById('target').className='';
+  document.getElementById('chart-wrap').style.display='none';
+  document.getElementById('history').innerHTML='';
+  var obsOv=document.getElementById('start-overlay'); if(obsOv){obsOv.style.display='';obsOv.classList.remove('hidden');}
+  obsInited=false;
+
+  // Pilot reset
+  pilotStop();
+  pilotPhase='idle'; pilotElapsed=0; pilotHistory=[];
+  touchpadFingerX=-1; touchpadFingerY=-1; dragging=false;
+  pilotCanvas=null; pilotCtx=null; touchpadCanvas=null; touchpadCtx=null;
+  document.getElementById('pilot-history').innerHTML='';
+  document.getElementById('pilot-result').classList.remove('visible');
+  document.getElementById('pilot-play-btn').textContent='▶ СТАРТ';
+  document.getElementById('pilot-hint-text').textContent='НАТИСНИ ДЛЯ ПОЧАТКУ';
+  document.getElementById('pilot-overlay').classList.remove('hidden');
+
+  // Chaos reset
+  chaosStop();
+  chaosNext=1; chaosPhase='idle'; chaosElapsed=0; chaosWrong=-1; chaosCorrect=-1;
+  chaosClickTimes=[]; chaosHistory=[];
+  document.getElementById('history-chaos').innerHTML='';
+  document.getElementById('chart-wrap-chaos').style.display='none';
+  var chOv=document.getElementById('start-overlay-chaos'); if(chOv){chOv.style.display='';chOv.classList.remove('hidden');}
+  chaosInited=false;
+
+  // Abyss reset
+  abyssStop();
+  abyssNext=1; abyssPhase='idle'; abyssElapsed=0; abyssWrong=-1; abyssCorrect=-1;
+  abyssClickTimes=[]; abyssHistory=[]; abyssMonoPhase=false;
+  document.getElementById('history-abyss').innerHTML='';
+  document.getElementById('chart-wrap-abyss').style.display='none';
+  document.getElementById('abyss-regen-hint').style.display='';
+  document.getElementById('abyss-next-regen').textContent='?';
+  var abOv=document.getElementById('start-overlay-abyss'); if(abOv){abOv.style.display='';abOv.classList.remove('hidden');}
+  abyssInited=false;
+
+  // Prank reset
+  prankStop();
+  prankNext=1; prankPhase='idle'; prankInited=false; prankMonoPhase=false;
+  clearTimeout(prankFourTimer);
+  prankFourRevealing=false; prankFourRevealAlpha=0;
+  document.getElementById('prank-msg').style.display='none';
+  document.getElementById('history-prank').innerHTML='';
+  var prOv=document.getElementById('start-overlay-prank'); if(prOv){prOv.style.display='';prOv.classList.remove('hidden');}
+
+  // Show menu
+  document.getElementById('screen-menu').classList.add('active');
+  document.getElementById('screen-obs').classList.remove('active');
+  document.getElementById('screen-pilot').classList.remove('active');
+  document.getElementById('screen-chaos').classList.remove('active');
+  document.getElementById('screen-abyss').classList.remove('active');
+  document.getElementById('screen-prank').classList.remove('active');
+  document.getElementById('back-btn').style.display = 'none';
+  document.getElementById('stats').style.display = 'none';
+  document.getElementById('hdr-sub').textContent = 'ТРЕНУВАЛЬНА ПЛАТФОРМА · v2.0';
+}
+
+// ===================== OBSERVATION TABLE =====================
+const PALETTE = [
+  ["#1e5252","#c0e8e8"],["#226060","#d0f0f0"],["#187070","#d5f5f5"],
+  ["#3d6878","#d0e8f0"],["#4a5c6c","#d0e0ea"],["#3a4e60","#c8dcea"],
+  ["#607585","#e0eef5"],["#6a7a8a","#eef5f8"],["#7a8898","#f0f5fa"],
+  ["#1a2838","#a8c0d0"],["#2a3848","#b8d0e0"],["#8a9298","#101820"],
+  ["#9aa2a8","#101820"],["#b0b8be","#101820"],["#c0cace","#101820"],
+  ["#506070","#d5e8f2"],["#4a7a8a","#d0eef5"],["#223040","#a0c0d0"],
+];
+const MOBILE = window.innerWidth < 600;
+const W = MOBILE ? 400 : 1400, H = MOBILE ? 500 : 700;
+const COLS = MOBILE ? 7 : 14, ROWS = MOBILE ? 8 : 9;
+const MAX_N = MOBILE ? 50 : 100;
+let obsInited = false;
+let rngState=0;
+function rng(){rngState=(Math.imul(1664525,rngState)+1013904223)|0;return(rngState>>>0)/4294967296;}
+function initRng(s){rngState=s|0;}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function genLayout(seed){
+  initRng(seed);
+  const jx=MOBILE?28:55,jy=MOBILE?22:42;
+  const raw=[];
+  for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++){
+    const bx=c/COLS*W,by=r/ROWS*H;
+    const ex=(c===0||c===COLS),ey=(r===0||r===ROWS);
+    raw.push({x:Math.max(2,Math.min(W-2,bx+(ex?0:(rng()-0.5)*jx))),y:Math.max(2,Math.min(H-2,by+(ey?0:(rng()-0.5)*jy)))});
+  }
+  const polys=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const tl=raw[r*(COLS+1)+c],tr=raw[r*(COLS+1)+c+1];
+    const bl=raw[(r+1)*(COLS+1)+c],br=raw[(r+1)*(COLS+1)+c+1];
+    const d=rng();
+    if(d>0.35)polys.push([tl,tr,br,bl]);
+    else if(d>0.18){polys.push([tl,tr,br]);polys.push([tl,br,bl]);}
+    else{polys.push([tl,tr,bl]);polys.push([tr,br,bl]);}
+  }
+  return polys;
+}
+function centerOf(pts){return{x:pts.reduce((a,p)=>a+p.x,0)/pts.length,y:pts.reduce((a,p)=>a+p.y,0)/pts.length};}
+function areaOf(pts){let a=0,n=pts.length;for(let i=0;i<n;i++){const j=(i+1)%n;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;}return Math.abs(a/2);}
+function buildAdjacency(polys){
+  const n=polys.length,vtxMap=new Map();
+  polys.forEach((pts,i)=>pts.forEach(p=>{
+    const key=p.x.toFixed(1)+','+p.y.toFixed(1);
+    if(!vtxMap.has(key))vtxMap.set(key,[]);
+    vtxMap.get(key).push(i);
+  }));
+  const adj=Array.from({length:n},()=>new Set());
+  vtxMap.forEach(idxs=>{for(let a=0;a<idxs.length;a++)for(let b=a+1;b<idxs.length;b++){adj[idxs[a]].add(idxs[b]);adj[idxs[b]].add(idxs[a]);}});
+  return adj;
+}
+function shuffleNonConsecutive(total,adj){
+  const nums=shuffle([...Array(total)].map((_,i)=>i+1));
+  for(let iter=0;iter<total*20;iter++){
+    let v=-1;
+    for(let i=0;i<total;i++){for(const j of adj[i])if(Math.abs(nums[i]-nums[j])===1){v=i;break;}if(v>=0)break;}
+    if(v<0)break;
+    let c,t=0;
+    do{c=Math.floor(rng()*total);t++;}while(t<20&&(adj[v].has(c)||c===v));
+    [nums[v],nums[c]]=[nums[c],nums[v]];
+  }
+  return nums;
+}
+let polys=[],numbers=[],colors=[],total=0;
+let next=1,phase='idle',startTime=0,elapsed=0,timerID=null;
+let wrong=-1,correct=-1,obsHistory=[],clickTimes=[];
+function initObs(){
+  if(obsInited)return; obsInited=true;
+  document.getElementById('overlay-mode').textContent=MOBILE?'МОБІЛЬНА ВЕРСІЯ · 1–50':'ПОВНА ВЕРСІЯ · 1–100';
+  document.getElementById('tbl').setAttribute('viewBox','0 0 '+W+' '+H);
+  buildObs(Date.now()|0);
+}
+function buildObs(seed){
+  polys=genLayout(seed); total=Math.min(polys.length,MAX_N); polys=polys.slice(0,total);
+  initRng(seed+99); colors=polys.map(()=>PALETTE[Math.floor(rng()*PALETTE.length)]);
+  initRng(seed+77); numbers=shuffleNonConsecutive(total,buildAdjacency(polys));
+  document.getElementById('total-hint').textContent=total; renderObs();
+}
+function renderObs(){
+  const svg=document.getElementById('tbl'); svg.innerHTML='';
+  polys.forEach((pts,i)=>{
+    const isWrong=wrong===i,isCorrect=correct===i;
+    const c=centerOf(pts),a=areaOf(pts);
+    const fs=MOBILE?(a>5000?18:a>2500?15:a>1200?13:11):(a>12000?20:a>7000?17:a>3500?15:a>1500?13:11);
+    const col=colors[i];
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.pointerEvents='none';
+    const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly.setAttribute('points',pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' '));
+    poly.setAttribute('fill',isCorrect?'#00cc66':isWrong?'#cc2222':col[0]);
+    poly.setAttribute('stroke',isCorrect?'#00ff88':isWrong?'#ff4444':'#080c14');
+    poly.setAttribute('stroke-width',isCorrect||isWrong?3:1.2);
+    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x',c.x); txt.setAttribute('y',c.y+fs*0.38);
+    txt.setAttribute('text-anchor','middle'); txt.setAttribute('font-size',fs);
+    txt.setAttribute('font-weight','bold'); txt.setAttribute('font-family','Courier New,monospace');
+    txt.setAttribute('fill',isWrong?'#ffcccc':col[1]);
+    txt.style.pointerEvents='none'; txt.textContent=numbers[i];
+    g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
+  });
+}
+function handleClick(idx){
+  if(phase!=='running')return;
+  if(numbers[idx]===next){
+    clickTimes.push(Date.now()); correct=idx; next++; renderObs();
+    setTimeout(()=>{correct=-1;renderObs();},350);
+    if(next>total){setTimeout(()=>endRun(),360);return;}
+    document.getElementById('target').innerHTML='ШУКАЙ: <span>'+next+'</span>';
+  } else {wrong=idx;renderObs();setTimeout(()=>{wrong=-1;renderObs();},400);}
+}
+function doStart(){if(phase!=='idle')return;startRun();}
+function startRun(){
+  phase='running'; startTime=Date.now(); clickTimes=[startTime];
+  var ol=document.getElementById('start-overlay'); ol.classList.add('hidden'); ol.style.display='none';
+  document.getElementById('chart-wrap').style.display='none';
+  document.getElementById('timer').className='running';
+  timerID=setInterval(()=>{elapsed=Date.now()-startTime;document.getElementById('timer').textContent=fmt(elapsed);},50);
+  document.getElementById('target').innerHTML='ШУКАЙ: <span>'+next+'</span>';
+}
+function endRun(){
+  clickTimes.push(Date.now()); clearInterval(timerID);
+  elapsed=Date.now()-startTime; phase='done';
+  document.getElementById('timer').textContent=fmt(elapsed);
+  document.getElementById('timer').className='done';
+  document.getElementById('target').textContent='✓ ВСІ ЗНАЙДЕНІ!';
+  document.getElementById('target').className='done';
+  obsHistory.push(elapsed); renderObsHistory(); drawChart();
+}
+function restart(){
+  clearInterval(timerID); timerID=null;
+  next=1; phase='idle'; elapsed=0; wrong=-1; correct=-1; clickTimes=[];
+  document.getElementById('timer').textContent='00.00с';
+  document.getElementById('timer').className='';
+  document.getElementById('target').innerHTML='&nbsp;';
+  document.getElementById('target').className='';
+  document.getElementById('chart-wrap').style.display='none';
+  document.getElementById('tbl').setAttribute('viewBox','0 0 '+W+' '+H);
+  buildObs(Date.now()|0);
+  var ov=document.getElementById('start-overlay'); ov.style.display=''; ov.classList.remove('hidden');
+}
+function renderObsHistory(){
+  document.getElementById('history').innerHTML=obsHistory.map((t,i)=>'<div class="hist-item">#'+(i+1)+' '+fmt(t)+'</div>').join('');
+}
+function drawChart(){
+  const intervals=[];
+  for(let i=1;i<clickTimes.length;i++) intervals.push(clickTimes[i]-clickTimes[i-1]);
+  const wrap=document.getElementById('chart-wrap'); wrap.style.display='block';
+  const canvas=document.getElementById('chart');
+  const CW=wrap.offsetWidth||800,CH=MOBILE?200:300;
+  canvas.width=CW; canvas.height=CH;
+  const ctx=canvas.getContext('2d');
+  const PAD={top:28,right:16,bottom:36,left:48};
+  const gW=CW-PAD.left-PAD.right,gH=CH-PAD.top-PAD.bottom;
+  const n=intervals.length,maxV=Math.max(...intervals);
+  const avgV=intervals.reduce((a,b)=>a+b,0)/n;
+  ctx.fillStyle='#0d1520'; ctx.fillRect(0,0,CW,CH);
+  ctx.strokeStyle='#1a3050'; ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const y=PAD.top+gH-(i/5)*gH;
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+gW,y);ctx.stroke();
+    ctx.fillStyle='#3a6a8a';ctx.font='9px Courier New';ctx.textAlign='right';
+    ctx.fillText((Math.round(maxV*i/5/100)/10)+'с',PAD.left-4,y+4);
+  }
+  ctx.fillStyle='#3a6a8a';ctx.font='9px Courier New';ctx.textAlign='center';
+  const step=Math.ceil(n/10);
+  for(let i=0;i<n;i+=step) ctx.fillText(i+1,PAD.left+(i/(n-1))*gW,CH-PAD.bottom+12);
+  ctx.fillText(n,PAD.left+gW,CH-PAD.bottom+12);
+  ctx.fillStyle='#2a5a7a';ctx.textAlign='center';
+  ctx.fillText('НОМЕР ЗНАЙДЕНОГО ЧИСЛА',PAD.left+gW/2,CH-3);
+  ctx.save();ctx.translate(11,PAD.top+gH/2);ctx.rotate(-Math.PI/2);ctx.fillText('ЧАС',0,0);ctx.restore();
+  const avgY=PAD.top+gH-(avgV/maxV)*gH;
+  ctx.strokeStyle='#2a6a4a';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(PAD.left,avgY);ctx.lineTo(PAD.left+gW,avgY);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#2a8a5a';ctx.font='8px Courier New';ctx.textAlign='left';
+  ctx.fillText('сер. '+(Math.round(avgV/100)/10)+'с',PAD.left+4,avgY-3);
+  ctx.beginPath();ctx.moveTo(PAD.left,PAD.top+gH);
+  for(let i=0;i<n;i++){
+    const x=PAD.left+(i/(n-1||1))*gW,y=PAD.top+gH-(intervals[i]/maxV)*gH;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(PAD.left+gW,PAD.top+gH);ctx.closePath();
+  const grad=ctx.createLinearGradient(0,PAD.top,0,PAD.top+gH);
+  grad.addColorStop(0,'rgba(0,180,220,0.25)');grad.addColorStop(1,'rgba(0,80,120,0.05)');
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.strokeStyle='#00c8f0';ctx.lineWidth=1.5;ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const x=PAD.left+(i/(n-1||1))*gW,y=PAD.top+gH-(intervals[i]/maxV)*gH;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  const sorted=[...intervals].map((val,idx)=>({val,idx})).sort((a,b)=>b.val-a.val).slice(0,5);
+  sorted.forEach(function(item){
+    const x=PAD.left+(item.idx/(n-1||1))*gW,y=PAD.top+gH-(item.val/maxV)*gH;
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='#ff4444';ctx.fill();
+    ctx.fillStyle='#ff8888';ctx.font='bold 9px Courier New';ctx.textAlign='center';
+    ctx.fillText(item.idx+1,x,y-7);
+  });
+  ctx.fillStyle='#4a8aaa';ctx.font='10px Courier New';ctx.textAlign='center';
+  ctx.fillText('КОГНІТИВНА АКТИВНІСТЬ — час пошуку (червоні точки = найважчі)',CW/2,PAD.top-8);
+}
+function fmt(ms){
+  const s=Math.floor(ms/1000),cs=Math.floor((ms%1000)/10),m=Math.floor(s/60);
+  return m>0?m+':'+String(s%60).padStart(2,'0')+'.'+String(cs).padStart(2,'0'):s+'.'+String(cs).padStart(2,'0')+'с';
+}
+// OBS iOS fixes
+var _ov=document.getElementById('start-overlay');
+if(_ov){
+  _ov.addEventListener('touchend',function(e){e.preventDefault();doStart();},{passive:false});
+  _ov.addEventListener('click',function(e){e.preventDefault();doStart();});
+}
+function pointInPoly(x,y,pts){
+  var inside=false;
+  for(var i=0,j=pts.length-1;i<pts.length;j=i++){
+    var xi=pts[i].x,yi=pts[i].y,xj=pts[j].x,yj=pts[j].y;
+    if(((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) inside=!inside;
+  }
+  return inside;
+}
+function getSVGCoords(e,svgEl){
+  var rect=svgEl.getBoundingClientRect();
+  var touch=e.changedTouches?e.changedTouches[0]:(e.touches?e.touches[0]:e);
+  var vb=svgEl.viewBox.baseVal;
+  return{x:(touch.clientX-rect.left)*(vb.width/rect.width),y:(touch.clientY-rect.top)*(vb.height/rect.height)};
+}
+(function(){
+  var overlay=document.getElementById('touch-overlay');
+  var svg=document.getElementById('tbl');
+  if(!overlay||!svg)return;
+  function onTap(e){
+    if(phase!=='running')return;
+    e.preventDefault();
+    var c=getSVGCoords(e,svg);
+    for(var i=0;i<polys.length;i++){if(pointInPoly(c.x,c.y,polys[i])){handleClick(i);return;}}
+  }
+  overlay.addEventListener('touchend',onTap,{passive:false});
+  overlay.addEventListener('click',onTap,false);
+})();
+
+// ===================== PILOT TEST =====================
+// Sizes based on 9.5cm field @ 60px/cm
+const PC_SIZE = 570;          // field is square 570x570
+const BORDER_W = 18;          // thick black border
+const TOTAL_W = PC_SIZE + BORDER_W * 2;
+const TOTAL_H = PC_SIZE + BORDER_W * 2;
+
+// Field rectangle in canvas coords
+const FX = BORDER_W, FY = BORDER_W, FW = PC_SIZE, FH = PC_SIZE;
+
+const SQ = 72;  // red square ~1.2cm
+
+// 4 blue obstacles (w, h in px = cm * 60)
+const RECTS_DEF = [
+  { w: 120, h: 120 },  // 2x2 cm
+  { w: 90,  h: 90  },  // 1.5x1.5 cm
+  { w: 60,  h: 120 },  // 1x2 cm
+  { w: 30,  h: 180 },  // 0.5x3 cm
+];
+const BASE_SPEED = 6.0;
+
+let pilotCanvas, pilotCtx;
+let pilotPhase = 'idle'; // idle | waiting | running | dead
+// waiting = game started but player hasn't clicked red square yet
+let pilotStartTime = 0, pilotElapsed = 0;
+let pilotTimerID = null, pilotAnimID = null;
+let pilotGameTime = 0;
+let pilotHistory = [];
+
+// Player
+let playerX = FX + (FW - SQ) / 2;
+let playerY = FY + (FH - SQ) / 2;
+let dragging = false;
+let dragOffX = 0, dragOffY = 0;
+let cursorX = 0, cursorY = 0;
+
+// Rects state
+let rects = [];
+
+let touchpadCanvas, touchpadCtx;
+let touchpadFingerX = -1, touchpadFingerY = -1; // -1 = no touch
+
+function initPilot() {
+  pilotCanvas = document.getElementById('pilot-canvas');
+  pilotCanvas.width = TOTAL_W;
+  pilotCanvas.height = TOTAL_H;
+  pilotCtx = pilotCanvas.getContext('2d');
+
+  // ---- TOUCHPAD (mobile only) ----
+  if (MOBILE) {
+    var tpWrap = document.getElementById('pilot-touchpad-wrap');
+    tpWrap.style.display = 'block';
+    touchpadCanvas = document.getElementById('pilot-touchpad');
+    touchpadCanvas.width = TOTAL_W;
+    touchpadCanvas.height = TOTAL_H;
+    touchpadCtx = touchpadCanvas.getContext('2d');
+
+    function getTpPos(e) {
+      var rect = touchpadCanvas.getBoundingClientRect();
+      var scaleX = TOTAL_W / rect.width, scaleY = TOTAL_H / rect.height;
+      var src = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+      return { x: (src.clientX - rect.left) * scaleX, y: (src.clientY - rect.top) * scaleY };
+    }
+
+    function tpFieldPos(p) {
+      // Map touchpad coords → field coords (1:1, same canvas size)
+      return { x: p.x, y: p.y };
+    }
+
+    function onTpDown(e) {
+      e.preventDefault();
+      var p = getTpPos(e);
+      touchpadFingerX = p.x; touchpadFingerY = p.y;
+      // Start game on first touch of touchpad (in waiting phase)
+      if (pilotPhase === 'waiting') {
+        dragging = true;
+        var fp = tpFieldPos(p);
+        playerX = fp.x - SQ / 2;
+        playerY = fp.y - SQ / 2;
+        pilotPhase = 'running';
+        pilotStartTime = Date.now();
+        pilotTimerID = setInterval(function() {
+          pilotElapsed = Date.now() - pilotStartTime;
+          document.getElementById('timer').textContent = fmt(pilotElapsed);
+        }, 50);
+        document.getElementById('timer').className = 'running';
+        document.getElementById('target').innerHTML = 'ТРИМАЙ ПАЛЕЦЬ · УНИКАЙ ЗІТКНЕНЬ';
+      }
+    }
+    function onTpMove(e) {
+      e.preventDefault();
+      if (!dragging || pilotPhase !== 'running') return;
+      var p = getTpPos(e);
+      touchpadFingerX = p.x; touchpadFingerY = p.y;
+      var fp = tpFieldPos(p);
+      playerX = fp.x - SQ / 2;
+      playerY = fp.y - SQ / 2;
+    }
+    function onTpUp(e) {
+      touchpadFingerX = -1; touchpadFingerY = -1;
+      if (!dragging) return;
+      dragging = false;
+      if (pilotPhase === 'running') pilotDie('ВІДПУСТИВ ПАЛЕЦЬ');
+    }
+
+    touchpadCanvas.addEventListener('touchstart', onTpDown, { passive: false });
+    touchpadCanvas.addEventListener('touchmove', onTpMove, { passive: false });
+    touchpadCanvas.addEventListener('touchend', onTpUp, { passive: false });
+    touchpadCanvas.addEventListener('touchcancel', onTpUp, { passive: false });
+  }
+
+  // ---- MOUSE (desktop) ----
+  function getPos(e) {
+    var rect = pilotCanvas.getBoundingClientRect();
+    var scaleX = TOTAL_W / rect.width, scaleY = TOTAL_H / rect.height;
+    var src = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+    return { x: (src.clientX - rect.left) * scaleX, y: (src.clientY - rect.top) * scaleY };
+  }
+
+  function onDown(e) {
+    if (MOBILE) return; // mobile uses touchpad
+    if (pilotPhase !== 'waiting') return;
+    e.preventDefault();
+    var p = getPos(e);
+    cursorX = p.x; cursorY = p.y;
+    if (p.x >= playerX && p.x <= playerX + SQ && p.y >= playerY && p.y <= playerY + SQ) {
+      dragging = true;
+      dragOffX = p.x - playerX;
+      dragOffY = p.y - playerY;
+      pilotPhase = 'running';
+      pilotStartTime = Date.now();
+      pilotTimerID = setInterval(function() {
+        pilotElapsed = Date.now() - pilotStartTime;
+        document.getElementById('timer').textContent = fmt(pilotElapsed);
+      }, 50);
+      document.getElementById('timer').className = 'running';
+      document.getElementById('target').innerHTML = 'ТРИМАЙ КНОПКУ · УНИКАЙ ЗІТКНЕНЬ';
+    }
+  }
+  function onMove(e) {
+    if (MOBILE || !dragging || pilotPhase !== 'running') return;
+    e.preventDefault();
+    var p = getPos(e);
+    cursorX = p.x; cursorY = p.y;
+    playerX = p.x - dragOffX;
+    playerY = p.y - dragOffY;
+  }
+  function onUp(e) {
+    if (MOBILE || !dragging) return;
+    dragging = false;
+    if (pilotPhase === 'running') pilotDie('ВІДПУСТИВ КНОПКУ');
+  }
+
+  pilotCanvas.addEventListener('mousedown', onDown);
+  pilotCanvas.addEventListener('mousemove', function(e) { onMove(e); });
+  window.addEventListener('mouseup', onUp);
+
+  var po = document.getElementById('pilot-overlay');
+  po.addEventListener('click', function() { pilotStart(); });
+  po.addEventListener('touchend', function(e) { e.preventDefault(); pilotStart(); }, { passive: false });
+
+  pilotDraw();
+  if (MOBILE) drawTouchpad();
+}
+
+function pilotStart() {
+  if (pilotPhase === 'running' || pilotPhase === 'waiting') return;
+  document.getElementById('pilot-overlay').classList.add('hidden');
+  document.getElementById('pilot-result').classList.remove('visible');
+
+  playerX = FX + (FW - SQ) / 2;
+  playerY = FY + (FH - SQ) / 2;
+  dragging = false;
+
+  // Init rects — по кутах поля, подалі від центру
+  var corners = [
+    { x: FX + 10,              y: FY + 10              }, // ліво-верх
+    { x: FX + FW - 10,         y: FY + 10              }, // право-верх
+    { x: FX + 10,              y: FY + FH - 10         }, // ліво-низ
+    { x: FX + FW - 10,         y: FY + FH - 10         }, // право-низ
+  ];
+  rects = RECTS_DEF.map(function(def, i) {
+    var corner = corners[i % corners.length];
+    // Anchor to corner — subtract w/h so rect stays inside field
+    var rx = corner.x - (i < 2 ? 0 : def.w);
+    var ry = corner.y - (i % 2 === 0 ? 0 : def.h);
+    rx = Math.max(FX, Math.min(FX + FW - def.w, rx));
+    ry = Math.max(FY, Math.min(FY + FH - def.h, ry));
+    // Direction: roughly toward opposite corner (inward), randomized ±40°
+    var baseAngle = Math.atan2(FY + FH * 0.5 - ry, FX + FW * 0.5 - rx);
+    var moveAngle = baseAngle + (Math.random() - 0.5) * 1.4;
+    return {
+      x: rx, y: ry, w: def.w, h: def.h,
+      dx: Math.cos(moveAngle),
+      dy: Math.sin(moveAngle),
+      phase: Math.random() * Math.PI * 2
+    };
+  });
+
+  pilotPhase = 'waiting';
+  pilotElapsed = 0;
+  pilotGameTime = 0;
+  document.getElementById('timer').textContent = '00.00с';
+  document.getElementById('timer').className = '';
+  document.getElementById('target').innerHTML = 'КЛІКНИ НА ЧЕРВОНИЙ КВАДРАТ';
+  document.getElementById('stats').style.display = 'flex';
+
+  pilotLoop();
+}
+
+function pilotStop() {
+  cancelAnimationFrame(pilotAnimID);
+  pilotAnimID = null;
+  clearInterval(pilotTimerID);
+  pilotTimerID = null;
+  dragging = false;
+}
+
+function pilotLoop() {
+  if (pilotPhase === 'idle' || pilotPhase === 'dead') return;
+  pilotGameTime = (pilotPhase === 'running') ? Date.now() - pilotStartTime : pilotGameTime;
+  if (pilotPhase === 'running') pilotUpdate();
+  pilotDraw();
+  if (MOBILE) drawTouchpad();
+  pilotAnimID = requestAnimationFrame(pilotLoop);
+}
+
+function pilotUpdate() {
+  var t = pilotGameTime;
+
+  // Check field boundary — same rule on all devices
+  if (playerX < FX || playerX + SQ > FX + FW || playerY < FY || playerY + SQ > FY + FH) {
+    pilotDie('ВИЙШОВ ЗА МЕЖІ');
+    return;
+  }
+
+  for (var i = 0; i < rects.length; i++) {
+    var r = rects[i];
+    var speedMult = 0.3 + 0.85 * Math.abs(Math.sin(t * 0.0008 + r.phase));
+    var speed = BASE_SPEED * speedMult;
+
+    r.x += r.dx * speed;
+    r.y += r.dy * speed;
+
+    if (r.x < FX) { r.x = FX; r.dx = Math.abs(r.dx); }
+    if (r.x + r.w > FX + FW) { r.x = FX + FW - r.w; r.dx = -Math.abs(r.dx); }
+    if (r.y < FY) { r.y = FY; r.dy = Math.abs(r.dy); }
+    if (r.y + r.h > FY + FH) { r.y = FY + FH - r.h; r.dy = -Math.abs(r.dy); }
+
+    // AABB collision
+    if (playerX < r.x + r.w && playerX + SQ > r.x &&
+        playerY < r.y + r.h && playerY + SQ > r.y) {
+      pilotDie('ЗІТКНЕННЯ');
+      return;
+    }
+  }
+}
+
+function pilotDie(reason) {
+  pilotPhase = 'dead';
+  clearInterval(pilotTimerID); pilotTimerID = null;
+  dragging = false;
+  pilotElapsed = Date.now() - pilotStartTime;
+  if (reason === 'ВІДПУСТИВ КНОПКУ') pilotElapsed = Date.now() - pilotStartTime;
+  pilotHistory.push(pilotElapsed);
+
+  document.getElementById('timer').textContent = fmt(pilotElapsed);
+  document.getElementById('timer').className = 'dead';
+  document.getElementById('target').textContent = '✗ ' + reason;
+  document.getElementById('target').className = 'dead';
+
+  var ph = document.getElementById('pilot-history');
+  ph.innerHTML = pilotHistory.map(function(t, i) {
+    return '<div class="hist-item">#' + (i+1) + ' ' + fmt(t) + '</div>';
+  }).join('');
+
+  var res = document.getElementById('pilot-result');
+  res.textContent = fmt(pilotElapsed) + '  ·  ' + reason;
+  res.classList.add('visible');
+  document.getElementById('pilot-play-btn').textContent = '▶ ПОВТОРИТИ';
+  document.getElementById('pilot-hint-text').textContent = 'НАТИСНИ ДЛЯ НОВОГО РАУНДУ';
+  document.getElementById('pilot-overlay').classList.remove('hidden');
+  pilotDraw();
+}
+
+function pilotReset() {
+  pilotStop();
+  pilotPhase = 'idle';
+  pilotElapsed = 0;
+  document.getElementById('timer').textContent = '00.00с';
+  document.getElementById('timer').className = '';
+  document.getElementById('target').innerHTML = '&nbsp;';
+  document.getElementById('target').className = '';
+  document.getElementById('pilot-result').classList.remove('visible');
+  document.getElementById('pilot-play-btn').textContent = '▶ СТАРТ';
+  document.getElementById('pilot-hint-text').textContent = 'НАТИСНИ ДЛЯ ПОЧАТКУ';
+  document.getElementById('pilot-overlay').classList.remove('hidden');
+  if (pilotCtx) pilotDraw();
+}
+
+function drawTouchpad() {
+  if (!touchpadCtx) return;
+  var ctx = touchpadCtx;
+
+  // Background = black border
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, TOTAL_W, TOTAL_H);
+
+  // Field area - slightly dimmed version of the game
+  ctx.fillStyle = '#c8d4de';
+  ctx.fillRect(FX, FY, FW, FH);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(80,120,160,0.18)';
+  ctx.lineWidth = 1;
+  var gStep = 60;
+  for (var gx = FX + gStep; gx < FX + FW; gx += gStep) {
+    ctx.beginPath(); ctx.moveTo(gx, FY); ctx.lineTo(gx, FY + FH); ctx.stroke();
+  }
+  for (var gy = FY + gStep; gy < FY + FH; gy += gStep) {
+    ctx.beginPath(); ctx.moveTo(FX, gy); ctx.lineTo(FX + FW, gy); ctx.stroke();
+  }
+
+  // Mirror red square (only — no blue rects to avoid distraction)
+  if (pilotPhase === 'running' || pilotPhase === 'waiting' || pilotPhase === 'dead') {
+    ctx.fillStyle = pilotPhase === 'dead' ? 'rgba(120,0,0,0.7)' : 'rgba(180,0,0,0.7)';
+    ctx.fillRect(playerX, playerY, SQ, SQ);
+  }
+
+  // Black border on top
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, TOTAL_W, BORDER_W);
+  ctx.fillRect(0, FY + FH, TOTAL_W, BORDER_W);
+  ctx.fillRect(0, 0, BORDER_W, TOTAL_H);
+  ctx.fillRect(FX + FW, 0, BORDER_W, TOTAL_H);
+
+  // Finger dot
+  if (touchpadFingerX >= 0) {
+    ctx.beginPath();
+    ctx.arc(touchpadFingerX, touchpadFingerY, 22, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,220,255,0.25)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(touchpadFingerX, touchpadFingerY, 10, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,220,255,0.7)';
+    ctx.fill();
+    // Ring
+    ctx.beginPath();
+    ctx.arc(touchpadFingerX, touchpadFingerY, 22, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,220,255,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+}
+
+function pilotDraw() {
+  if (!pilotCtx) return;
+  var ctx = pilotCtx;
+
+  // Outer background = black border
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, TOTAL_W, TOTAL_H);
+
+  // White field
+  ctx.fillStyle = '#f4f4f4';
+  ctx.fillRect(FX, FY, FW, FH);
+
+  // Draw blue rects
+  for (var i = 0; i < rects.length; i++) {
+    var r = rects[i];
+    ctx.fillStyle = '#0033cc';
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    // Subtle inner highlight
+    ctx.fillStyle = 'rgba(60,100,255,0.35)';
+    ctx.fillRect(r.x+2, r.y+2, r.w-4, 6);
+  }
+
+  // Draw red square
+  if (pilotPhase !== 'idle') {
+    var isWaiting = (pilotPhase === 'waiting');
+    var isDead = (pilotPhase === 'dead');
+    // Pulsing outline for waiting state
+    if (isWaiting) {
+      var pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.006);
+      ctx.shadowColor = 'rgba(255,50,50,' + pulse + ')';
+      ctx.shadowBlur = 18 * pulse;
+    }
+    ctx.fillStyle = isDead ? '#880000' : '#cc0000';
+    ctx.fillRect(playerX, playerY, SQ, SQ);
+    ctx.shadowBlur = 0;
+  }
+
+  // Black border frame (drawn on top to cover rect overflow)
+  ctx.fillStyle = '#111';
+  // top
+  ctx.fillRect(0, 0, TOTAL_W, BORDER_W);
+  // bottom
+  ctx.fillRect(0, FY + FH, TOTAL_W, BORDER_W);
+  // left
+  ctx.fillRect(0, 0, BORDER_W, TOTAL_H);
+  // right
+  ctx.fillRect(FX + FW, 0, BORDER_W, TOTAL_H);
+}
+
+
+// ===================== CHAOS OBS =====================
+// Same layout engine as OBS, but cells cycle rainbow hues
+// and text color sometimes blends with background
+
+let chaosPolys=[], chaosNumbers=[], chaosTotal=0;
+let chaosNext=1, chaosPhase='idle', chaosStartTime=0, chaosElapsed=0;
+let chaosTimerID=null, chaosAnimID=null;
+let chaosWrong=-1, chaosCorrect=-1, chaosHistory=[], chaosClickTimes=[];
+// Per-cell hue phases (0-360)
+let chaosHuePhases=[];
+let chaosInited=false;
+
+// Speed of hue cycling: degrees per millisecond
+const HUE_SPEED = 0.012;  // full rainbow cycle ~30 seconds
+
+function initChaos() {
+  if (chaosInited) return; chaosInited = true;
+  document.getElementById('tbl-chaos').setAttribute('viewBox','0 0 '+W+' '+H);
+  buildChaos(Date.now()|0);
+
+  // Overlay click
+  var ov = document.getElementById('start-overlay-chaos');
+  ov.addEventListener('touchend', function(e){e.preventDefault();chaosDoStart();},{passive:false});
+  ov.addEventListener('click', function(e){e.preventDefault();chaosDoStart();});
+
+  // Touch handler
+  var overlay = document.getElementById('touch-overlay-chaos');
+  var svg = document.getElementById('tbl-chaos');
+  function onTap(e){
+    if(chaosPhase!=='running') return;
+    e.preventDefault();
+    var c=getSVGCoords(e,svg);
+    for(var i=0;i<chaosPolys.length;i++){if(pointInPoly(c.x,c.y,chaosPolys[i])){chaosHandleClick(i);return;}}
+  }
+  overlay.addEventListener('touchend',onTap,{passive:false});
+  overlay.addEventListener('click',onTap,false);
+
+  // Start animation loop for color cycling
+  chaosAnimLoop();
+}
+
+function buildChaos(seed) {
+  chaosPolys = genLayout(seed);
+  chaosTotal = Math.min(chaosPolys.length, MAX_N);
+  chaosPolys = chaosPolys.slice(0, chaosTotal);
+  // Random starting hue for each cell
+  initRng(seed + 333);
+  chaosHuePhases = chaosPolys.map(function(_, i) { return rng() * 360; });
+  initRng(seed + 77);
+  chaosNumbers = shuffleNonConsecutive(chaosTotal, buildAdjacency(chaosPolys));
+  document.getElementById('total-hint-chaos').textContent = chaosTotal;
+  renderChaos(0);
+}
+
+function chaosAnimLoop() {
+  if (document.getElementById('screen-chaos').classList.contains('active')) {
+    var t = chaosPhase === 'running' ? (Date.now() - chaosStartTime) : (Date.now() % 60000);
+    renderChaos(t);
+  }
+  chaosAnimID = requestAnimationFrame(chaosAnimLoop);
+}
+
+function chaosStop() {
+  cancelAnimationFrame(chaosAnimID); chaosAnimID = null;
+  clearInterval(chaosTimerID); chaosTimerID = null;
+}
+
+function hsl(h, s, l) {
+  return 'hsl(' + (h % 360) + ',' + s + '%,' + l + '%)';
+}
+
+function renderChaos(t) {
+  var svg = document.getElementById('tbl-chaos');
+  svg.innerHTML = '';
+
+  for (var i = 0; i < chaosPolys.length; i++) {
+    var pts = chaosPolys[i];
+    var isWrong = chaosWrong === i, isCorrect = chaosCorrect === i;
+
+    // Each cell has its own hue that cycles over time + its own starting phase
+    var hue = (chaosHuePhases[i] + t * HUE_SPEED) % 360;
+
+    // Background cell color: full saturation, medium lightness
+    var bgL = 35 + 15 * Math.sin(t * 0.0013 + i * 0.7); // lightness oscillates 35-50
+    var bgColor = isCorrect ? '#00cc66' : isWrong ? '#cc2222' : hsl(hue, 80, bgL);
+
+    // Text color: offset hue by 160-200 degrees (near-complement)
+    // But every ~8 seconds per cell, it drifts close to bg → blends
+    // blendFactor 0=full contrast, 1=invisible
+    var blendCycle = Math.sin(t * 0.0007 + chaosHuePhases[i] * 0.05);
+    var blendFactor = Math.max(0, blendCycle); // 0..1, positive half only → blend ~50% of time
+    blendFactor = blendFactor * blendFactor; // square for sharper transition
+
+    var textHue, textL, textS;
+    if (isCorrect) { textHue=120; textS=100; textL=10; }
+    else if (isWrong) { textHue=0; textS=100; textL=90; }
+    else {
+      // Normal: complement hue, high contrast lightness
+      var contrastL = bgL > 42 ? 8 : 92;
+      // Blend toward bgL (invisible)
+      textL = contrastL + blendFactor * (bgL - contrastL);
+      textHue = (hue + 180) % 360;
+      textS = 70 - blendFactor * 50; // also desaturate when blending
+    }
+    var textColor = isCorrect ? hsl(120,100,10) : isWrong ? hsl(0,100,90) : hsl(textHue, textS, textL);
+
+    var c = centerOf(pts), a = areaOf(pts);
+    var fs = MOBILE ? (a>5000?18:a>2500?15:a>1200?13:11) : (a>12000?20:a>7000?17:a>3500?15:a>1500?13:11);
+
+    var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.pointerEvents = 'none';
+
+    var poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly.setAttribute('points', pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' '));
+    poly.setAttribute('fill', bgColor);
+    poly.setAttribute('stroke', isCorrect?'#00ff88':isWrong?'#ff4444':'#080c14');
+    poly.setAttribute('stroke-width', isCorrect||isWrong ? 3 : 1.2);
+
+    var txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', c.x); txt.setAttribute('y', c.y + fs * 0.38);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size', fs);
+    txt.setAttribute('font-weight','bold');
+    txt.setAttribute('font-family','Courier New,monospace');
+    txt.setAttribute('fill', textColor);
+    txt.style.pointerEvents = 'none';
+    txt.textContent = chaosNumbers[i];
+
+    g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
+  }
+}
+
+function chaosHandleClick(idx) {
+  if (chaosPhase !== 'running') return;
+  if (chaosNumbers[idx] === chaosNext) {
+    chaosClickTimes.push(Date.now());
+    chaosCorrect = idx; chaosNext++;
+    setTimeout(function(){chaosCorrect=-1;},350);
+    if (chaosNext > chaosTotal) { setTimeout(function(){chaosEndRun();}, 360); return; }
+    document.getElementById('target').innerHTML = 'ШУКАЙ: <span>' + chaosNext + '</span>';
+  } else {
+    chaosWrong = idx; setTimeout(function(){chaosWrong=-1;}, 400);
+  }
+}
+
+function chaosDoStart() {
+  if (chaosPhase !== 'idle') return;
+  chaosPhase = 'running'; chaosStartTime = Date.now(); chaosClickTimes = [chaosStartTime];
+  var ol = document.getElementById('start-overlay-chaos'); ol.classList.add('hidden'); ol.style.display = 'none';
+  document.getElementById('chart-wrap-chaos').style.display = 'none';
+  document.getElementById('timer').className = 'running';
+  chaosTimerID = setInterval(function(){
+    chaosElapsed = Date.now() - chaosStartTime;
+    document.getElementById('timer').textContent = fmt(chaosElapsed);
+  }, 50);
+  document.getElementById('target').innerHTML = 'ШУКАЙ: <span>' + chaosNext + '</span>';
+}
+
+function chaosEndRun() {
+  chaosClickTimes.push(Date.now()); clearInterval(chaosTimerID);
+  chaosElapsed = Date.now() - chaosStartTime; chaosPhase = 'done';
+  document.getElementById('timer').textContent = fmt(chaosElapsed);
+  document.getElementById('timer').className = 'done';
+  document.getElementById('target').textContent = '✓ ВСІ ЗНАЙДЕНІ!';
+  document.getElementById('target').className = 'done';
+  chaosHistory.push(chaosElapsed);
+  document.getElementById('history-chaos').innerHTML = chaosHistory.map(function(t,i){
+    return '<div class="hist-item">#'+(i+1)+' '+fmt(t)+'</div>';
+  }).join('');
+  // Draw chart
+  var intervals=[];
+  for(var i=1;i<chaosClickTimes.length;i++) intervals.push(chaosClickTimes[i]-chaosClickTimes[i-1]);
+  var wrap=document.getElementById('chart-wrap-chaos'); wrap.style.display='block';
+  var canvas=document.getElementById('chart-chaos');
+  var CW=wrap.offsetWidth||800, CH=MOBILE?200:300;
+  canvas.width=CW; canvas.height=CH;
+  var ctx=canvas.getContext('2d');
+  var PAD={top:28,right:16,bottom:36,left:48};
+  var gW=CW-PAD.left-PAD.right, gH=CH-PAD.top-PAD.bottom;
+  var n=intervals.length, maxV=Math.max.apply(null,intervals);
+  var avgV=intervals.reduce(function(a,b){return a+b;},0)/n;
+  ctx.fillStyle='#0d1520'; ctx.fillRect(0,0,CW,CH);
+  ctx.strokeStyle='#1a3050'; ctx.lineWidth=1;
+  for(var k=0;k<=5;k++){
+    var y=PAD.top+gH-(k/5)*gH;
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+gW,y);ctx.stroke();
+    ctx.fillStyle='#3a6a8a';ctx.font='9px Courier New';ctx.textAlign='right';
+    ctx.fillText((Math.round(maxV*k/5/100)/10)+'с',PAD.left-4,y+4);
+  }
+  ctx.fillStyle='#2a5a7a';ctx.font='9px Courier New';ctx.textAlign='center';
+  ctx.fillText('НОМЕР ЗНАЙДЕНОГО ЧИСЛА',PAD.left+gW/2,CH-3);
+  var avgY=PAD.top+gH-(avgV/maxV)*gH;
+  ctx.strokeStyle='#2a6a4a';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(PAD.left,avgY);ctx.lineTo(PAD.left+gW,avgY);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(PAD.left,PAD.top+gH);
+  for(var i=0;i<n;i++){
+    var x=PAD.left+(i/(n-1||1))*gW, y2=PAD.top+gH-(intervals[i]/maxV)*gH;
+    ctx.lineTo(x,y2);
+  }
+  ctx.lineTo(PAD.left+gW,PAD.top+gH);ctx.closePath();
+  var grad=ctx.createLinearGradient(0,PAD.top,0,PAD.top+gH);
+  grad.addColorStop(0,'rgba(255,150,0,0.3)');grad.addColorStop(1,'rgba(180,80,0,0.05)');
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.strokeStyle='#ff9900';ctx.lineWidth=1.5;ctx.beginPath();
+  for(var i=0;i<n;i++){
+    var x=PAD.left+(i/(n-1||1))*gW, y2=PAD.top+gH-(intervals[i]/maxV)*gH;
+    i===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);
+  }
+  ctx.stroke();
+  ctx.fillStyle='#ff6600';ctx.font='10px Courier New';ctx.textAlign='center';
+  ctx.fillText('ХАОС · КОГНІТИВНА АКТИВНІСТЬ',CW/2,PAD.top-8);
+}
+
+function restartChaos() {
+  clearInterval(chaosTimerID); chaosTimerID=null;
+  chaosNext=1; chaosPhase='idle'; chaosElapsed=0; chaosWrong=-1; chaosCorrect=-1; chaosClickTimes=[];
+  document.getElementById('timer').textContent='00.00с';
+  document.getElementById('timer').className='';
+  document.getElementById('target').innerHTML='&nbsp;';
+  document.getElementById('target').className='';
+  document.getElementById('chart-wrap-chaos').style.display='none';
+  document.getElementById('tbl-chaos').setAttribute('viewBox','0 0 '+W+' '+H);
+  buildChaos(Date.now()|0);
+  var ov=document.getElementById('start-overlay-chaos'); ov.style.display=''; ov.classList.remove('hidden');
+}
+
+
+// ===================== PILOT VIEWPORT FIT =====================
+function fitPilot() {
+  // Calculate available height for pilot screen
+  var headerH = document.querySelector('.platform-header').offsetHeight;
+  var btnH = 44; // controls-bar approx
+  var labelH = 18; // touchpad label
+  var gap = 10;
+  var available = window.innerHeight - headerH - btnH - 20; // 20 = body padding
+  var fieldSize;
+  if (MOBILE) {
+    // Two fields stacked + label + gap
+    fieldSize = Math.floor((available - labelH - gap * 2) / 2);
+  } else {
+    fieldSize = Math.min(606, available);
+  }
+  fieldSize = Math.max(160, Math.min(fieldSize, 606));
+  var arenaWrap = document.getElementById('pilot-arena-wrap');
+  var tpWrap = document.getElementById('pilot-touchpad-wrap');
+  if (arenaWrap) { arenaWrap.style.width = fieldSize + 'px'; arenaWrap.style.maxWidth = fieldSize + 'px'; }
+  if (tpWrap) { tpWrap.style.width = fieldSize + 'px'; tpWrap.style.maxWidth = fieldSize + 'px'; }
+}
+window.addEventListener('resize', fitPilot);
+// Called also from showTest('pilot') — patch initPilot to call it
+var _origInitPilot = initPilot;
+initPilot = function() {
+  _origInitPilot();
+  fitPilot();
+};
+
+// ===================== ABYSS TEST =====================
+let abyssPolys=[], abyssNumbers=[], abyssTotal=0;
+let abyssNext=1, abyssPhase='idle', abyssStartTime=0, abyssElapsed=0;
+let abyssTimerID=null, abyssAnimID=null, abyssRegenTimerID=null;
+let abyssWrong=-1, abyssCorrect=-1, abyssHistory=[], abyssClickTimes=[];
+let abyssLastCenter = null;
+let abyssHuePhases=[];
+let abyssInited=false;
+let abyssNextRegenIn=0; // seconds until next regen
+let abyssRegenAt=0;    // timestamp of next regen
+let abyssMonoPhase=false; // true = everything same color
+let abyssMonoTimerID=null;
+let abyssGameTime=0;
+
+const ABYSS_HUE_SPEED = 0.018; // faster than chaos
+const ABYSS_REGEN_MIN = 40000; // 40s
+const ABYSS_REGEN_MAX = 120000; // 2min
+const ABYSS_MONO_DURATION = 1000; // ms — flash duration
+
+function abyssStop() {
+  cancelAnimationFrame(abyssAnimID); abyssAnimID = null;
+  clearInterval(abyssTimerID); abyssTimerID = null;
+  clearTimeout(abyssRegenTimerID); abyssRegenTimerID = null;
+}
+
+function initAbyss() {
+  if (abyssInited) return; abyssInited = true;
+  document.getElementById('tbl-abyss').setAttribute('viewBox','0 0 '+W+' '+H);
+  buildAbyss(Date.now()|0);
+
+  var ov = document.getElementById('start-overlay-abyss');
+  ov.addEventListener('touchend', function(e){e.preventDefault();abyssDoStart();},{passive:false});
+  ov.addEventListener('click', function(e){e.preventDefault();abyssDoStart();});
+
+  var overlay = document.getElementById('touch-overlay-abyss');
+  var svg = document.getElementById('tbl-abyss');
+  function onTap(e){
+    if(abyssPhase!=='running') return;
+    e.preventDefault();
+    var c=getSVGCoords(e,svg);
+    for(var i=0;i<abyssPolys.length;i++){if(pointInPoly(c.x,c.y,abyssPolys[i])){abyssHandleClick(i);return;}}
+  }
+  overlay.addEventListener('touchend',onTap,{passive:false});
+  overlay.addEventListener('click',onTap,false);
+
+  abyssAnimLoop();
+}
+
+function buildAbyss(seed, keepNext) {
+  abyssPolys = genLayout(seed);
+  abyssTotal = Math.min(abyssPolys.length, MAX_N);
+  abyssPolys = abyssPolys.slice(0, abyssTotal);
+  initRng(seed + 555);
+  abyssHuePhases = abyssPolys.map(function() { return rng() * 360; });
+  initRng(seed + 77);
+  abyssNumbers = shuffleNonConsecutive(abyssTotal, buildAdjacency(abyssPolys));
+  if (!keepNext) {
+    abyssNext = 1;
+    document.getElementById('total-hint-abyss').textContent = abyssTotal;
+  }
+}
+
+// After reshuffle: ensure abyssNext polygon is far from abyssLastCenter
+function abyssEnsureFarNext() {
+  if (!abyssLastCenter) return;
+  var nextIdx = abyssNumbers.indexOf(abyssNext);
+  if (nextIdx < 0) return;
+  var nc = centerOf(abyssPolys[nextIdx]);
+  var dist = Math.sqrt(Math.pow(nc.x - abyssLastCenter.x, 2) + Math.pow(nc.y - abyssLastCenter.y, 2));
+  // Target: 5–10 cells away ≈ 150–300px in our coordinate space
+  var minDist = 180;
+  if (dist < minDist) {
+    // Collect polygons far enough away
+    var far = [];
+    for (var i = 0; i < abyssPolys.length; i++) {
+      if (i === nextIdx) continue;
+      var c = centerOf(abyssPolys[i]);
+      var d = Math.sqrt(Math.pow(c.x - abyssLastCenter.x, 2) + Math.pow(c.y - abyssLastCenter.y, 2));
+      if (d >= minDist) far.push(i);
+    }
+    if (far.length > 0) {
+      // Pick random far polygon and swap numbers
+      var swapIdx = far[Math.floor(Math.random() * far.length)];
+      var tmp = abyssNumbers[nextIdx];
+      abyssNumbers[nextIdx] = abyssNumbers[swapIdx];
+      abyssNumbers[swapIdx] = tmp;
+    }
+  }
+}
+
+function abyssDoStart() {
+  if (abyssPhase !== 'idle') return;
+  abyssPhase = 'running'; abyssStartTime = Date.now(); abyssClickTimes = [abyssStartTime];
+  var ol = document.getElementById('start-overlay-abyss'); ol.classList.add('hidden'); ol.style.display = 'none';
+  document.getElementById('chart-wrap-abyss').style.display = 'none';
+  document.getElementById('timer').className = 'running';
+  abyssTimerID = setInterval(function(){
+    abyssElapsed = Date.now() - abyssStartTime;
+    document.getElementById('timer').textContent = fmt(abyssElapsed);
+    // Update countdown
+    var secLeft = Math.max(0, Math.ceil((abyssRegenAt - Date.now()) / 1000));
+    document.getElementById('abyss-next-regen').textContent = secLeft;
+  }, 200);
+  document.getElementById('target').innerHTML = 'ШУКАЙ: <span>' + abyssNext + '</span>';
+  scheduleFlashRegen();
+}
+
+function scheduleFlashRegen() {
+  clearTimeout(abyssRegenTimerID);
+  var delay = ABYSS_REGEN_MIN + Math.random() * (ABYSS_REGEN_MAX - ABYSS_REGEN_MIN);
+  abyssRegenAt = Date.now() + delay;
+  abyssRegenTimerID = setTimeout(function() {
+    if (abyssPhase !== 'running') return;
+    abyssMonoPhase = true;
+    setTimeout(function() {
+      buildAbyss(Date.now()|0, true); // reshuffle, keep next number
+      abyssEnsureFarNext();
+      abyssMonoPhase = false;
+      scheduleFlashRegen(); // schedule next
+    }, 100);
+  }, delay);
+}
+
+function abyssAnimLoop() {
+  if (document.getElementById('screen-abyss').classList.contains('active')) {
+    var t = abyssPhase === 'running' ? (Date.now() - abyssStartTime) : (Date.now() % 60000);
+    renderAbyss(t);
+  }
+  abyssAnimID = requestAnimationFrame(abyssAnimLoop);
+}
+
+function renderAbyss(t) {
+  var svg = document.getElementById('tbl-abyss');
+  svg.innerHTML = '';
+
+  // Monochrome flash: pick a single hue for everything
+  var monoHue = abyssMonoPhase ? (t * 0.05 % 360) : -1;
+
+  for (var i = 0; i < abyssPolys.length; i++) {
+    var pts = abyssPolys[i];
+    var isWrong = abyssWrong === i, isCorrect = abyssCorrect === i;
+
+    var bgColor, textColor;
+
+    if (isCorrect) {
+      bgColor = '#00cc66'; textColor = '#003322';
+    } else if (isWrong) {
+      bgColor = '#cc2222'; textColor = '#ffcccc';
+    } else if (abyssMonoPhase) {
+      // Everything same hue — digits invisible
+      var monoL = 40 + 8 * Math.sin(i * 0.8);
+      bgColor = 'hsl(' + monoHue + ',75%,' + monoL + '%)';
+      textColor = 'hsl(' + monoHue + ',70%,' + (monoL + 2) + '%)'; // nearly invisible
+    } else {
+      var hue = (abyssHuePhases[i] + t * ABYSS_HUE_SPEED) % 360;
+      var bgL = 32 + 18 * Math.sin(t * 0.0015 + i * 0.6);
+      bgColor = 'hsl(' + hue + ',85%,' + bgL + '%)';
+
+      // Blend cycle — more aggressive than chaos
+      var blendCycle = Math.sin(t * 0.001 + abyssHuePhases[i] * 0.07);
+      var blendFactor = Math.max(0, blendCycle);
+      blendFactor = blendFactor * blendFactor * blendFactor; // cubic — sharper snap
+
+      var contrastL = bgL > 42 ? 6 : 94;
+      var textL = contrastL + blendFactor * (bgL - contrastL);
+      var textS = 65 - blendFactor * 60;
+      textColor = 'hsl(' + ((hue + 180) % 360) + ',' + textS + '%,' + textL + '%)';
+    }
+
+    var c = centerOf(pts), a = areaOf(pts);
+    var fs = MOBILE ? (a>5000?18:a>2500?15:a>1200?13:11) : (a>12000?20:a>7000?17:a>3500?15:a>1500?13:11);
+
+    var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.pointerEvents = 'none';
+
+    var poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly.setAttribute('points', pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' '));
+    poly.setAttribute('fill', bgColor);
+    poly.setAttribute('stroke', isCorrect?'#00ff88':isWrong?'#ff4444':'#080c14');
+    poly.setAttribute('stroke-width', isCorrect||isWrong ? 3 : 1.2);
+
+    var txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', c.x); txt.setAttribute('y', c.y + fs * 0.38);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size', fs);
+    txt.setAttribute('font-weight','bold');
+    txt.setAttribute('font-family','Courier New,monospace');
+    txt.setAttribute('fill', textColor);
+    txt.style.pointerEvents = 'none';
+    txt.textContent = abyssNumbers[i];
+
+    g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
+  }
+}
+
+function abyssHandleClick(idx) {
+  if (abyssPhase !== 'running') return;
+  if (abyssNumbers[idx] === abyssNext) {
+    abyssClickTimes.push(Date.now());
+    abyssLastCenter = centerOf(abyssPolys[idx]); // remember where we just clicked
+    abyssCorrect = idx; abyssNext++;
+    if (abyssNext > abyssTotal) { setTimeout(function(){abyssEndRun();}, 360); return; }
+    document.getElementById('target').innerHTML = 'ШУКАЙ: <span>' + abyssNext + '</span>';
+    // Reshuffle immediately after find — flash + new layout
+    abyssMonoPhase = true;
+    clearTimeout(abyssRegenTimerID);
+    setTimeout(function() {
+      if (abyssPhase !== 'running') return;
+      buildAbyss(Date.now()|0, true);
+      abyssEnsureFarNext(); // move next number far from last found
+      abyssMonoPhase = false;
+      scheduleFlashRegen();
+    }, 100);
+  } else {
+    abyssWrong = idx; setTimeout(function(){abyssWrong=-1;}, 400);
+  }
+}
+
+function abyssEndRun() {
+  abyssClickTimes.push(Date.now());
+  clearInterval(abyssTimerID); abyssTimerID = null;
+  clearTimeout(abyssRegenTimerID);
+  abyssElapsed = Date.now() - abyssStartTime; abyssPhase = 'done';
+  document.getElementById('timer').textContent = fmt(abyssElapsed);
+  document.getElementById('timer').className = 'done';
+  document.getElementById('target').textContent = '✓ ВСІ ЗНАЙДЕНІ!';
+  document.getElementById('target').className = 'done';
+  document.getElementById('abyss-regen-hint').style.display = 'none';
+  abyssHistory.push(abyssElapsed);
+  document.getElementById('history-abyss').innerHTML = abyssHistory.map(function(t,i){
+    return '<div class="hist-item">#'+(i+1)+' '+fmt(t)+'</div>';
+  }).join('');
+}
+
+function restartAbyss() {
+  abyssStop();
+  abyssNext=1; abyssPhase='idle'; abyssElapsed=0; abyssWrong=-1; abyssCorrect=-1;
+  abyssClickTimes=[]; abyssMonoPhase=false; abyssLastCenter=null;
+  document.getElementById('timer').textContent='00.00с';
+  document.getElementById('timer').className='';
+  document.getElementById('target').innerHTML='&nbsp;';
+  document.getElementById('target').className='';
+  document.getElementById('abyss-regen-hint').style.display='';
+  document.getElementById('abyss-next-regen').textContent='?';
+  document.getElementById('chart-wrap-abyss').style.display='none';
+  document.getElementById('tbl-abyss').setAttribute('viewBox','0 0 '+W+' '+H);
+  buildAbyss(Date.now()|0);
+  var ov=document.getElementById('start-overlay-abyss'); ov.style.display=''; ov.classList.remove('hidden');
+}
+
+// ===================== PRANK TEST =====================
+let prankPolys=[], prankNumbers=[], prankTotal=0;
+let prankNext=1, prankPhase='idle', prankStartTime=0, prankElapsed=0;
+let prankTimerID=null, prankAnimID=null;
+let prankWrong=-1, prankCorrect=-1, prankHistory=[], prankClickTimes=[];
+let prankHuePhases=[];
+let prankInited=false;
+let prankMonoPhase=false;
+let prankFourTimer=null;
+let prankFourVisible=false;
+const PRANK_NUMBER = 4; // the missing number
+
+function prankStop() {
+  cancelAnimationFrame(prankAnimID); prankAnimID=null;
+  clearInterval(prankTimerID); prankTimerID=null;
+  clearTimeout(prankFourTimer); prankFourTimer=null;
+}
+
+function initPrank() {
+  if (prankInited) return; prankInited=true;
+  document.getElementById('tbl-prank').setAttribute('viewBox','0 0 '+W+' '+H);
+  buildPrank(Date.now()|0);
+
+  var ov=document.getElementById('start-overlay-prank');
+  ov.addEventListener('touchend',function(e){e.preventDefault();prankDoStart();},{passive:false});
+  ov.addEventListener('click',function(e){e.preventDefault();prankDoStart();});
+
+  var overlay=document.getElementById('touch-overlay-prank');
+  var svg=document.getElementById('tbl-prank');
+  function onTap(e){
+    if(prankPhase!=='running') return;
+    e.preventDefault();
+    var c=getSVGCoords(e,svg);
+    for(var i=0;i<prankPolys.length;i++){if(pointInPoly(c.x,c.y,prankPolys[i])){prankHandleClick(i);return;}}
+  }
+  overlay.addEventListener('touchend',onTap,{passive:false});
+  overlay.addEventListener('click',onTap,false);
+
+  // Floating 4 click handler
+  var four=document.getElementById('prank-four');
+  function onFourClick(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    if(prankPhase!=='running') return;
+    prankShowMessage();
+  }
+  four.addEventListener('click', onFourClick);
+  four.addEventListener('touchend', function(e){e.preventDefault();onFourClick(e);}, {passive:false});
+
+  prankAnimLoop();
+}
+
+function buildPrank(seed) {
+  prankPolys = genLayout(seed);
+  prankTotal = Math.min(prankPolys.length, MAX_N);
+  prankPolys = prankPolys.slice(0, prankTotal);
+  initRng(seed+555);
+  prankHuePhases = prankPolys.map(function(){return rng()*360;});
+  initRng(seed+77);
+  prankNumbers = shuffleNonConsecutive(prankTotal, buildAdjacency(prankPolys));
+  document.getElementById('total-hint-prank').textContent = prankTotal;
+  prankFourVisible = false;
+  prankFourRevealing = false;
+  prankFreezeT = 0;
+}
+
+function prankAnimLoop() {
+  if (document.getElementById('screen-prank').classList.contains('active')) {
+    var t = prankPhase==='running' ? (Date.now()-prankStartTime) : (Date.now()%60000);
+    renderPrank(t);
+  }
+  prankAnimID = requestAnimationFrame(prankAnimLoop);
+}
+
+function renderPrank(t) {
+  var svg=document.getElementById('tbl-prank');
+  svg.innerHTML='';
+  var monoHue = prankMonoPhase ? (t*0.05%360) : -1;
+
+  // Compute slide progress for the 4 sector
+  var slideProgress = 0, slideOffsetY = prankFourSlideFromY;
+  if(prankFourVisible) {
+    var elapsed4 = Date.now() - prankFourSlideStart;
+    // Ease-out: progress = 1 - (1-t)^3
+    var raw = Math.min(1, elapsed4 / PRANK_SLIDE_DURATION);
+    slideProgress = 1 - Math.pow(1 - raw, 3);
+    slideOffsetY = prankFourSlideFromY * (1 - slideProgress);
+    if(raw >= 1) { prankFourRevealing = false; slideOffsetY = 0; }
+  }
+
+  for(var i=0;i<prankPolys.length;i++){
+    var pts=prankPolys[i];
+    var isWrong=prankWrong===i, isCorrect=prankCorrect===i;
+    var num=prankNumbers[i];
+    var isMissing=(num===PRANK_NUMBER);
+
+    // Use frozen time for non-4 cells once reveal starts
+    var cellT = (prankFourVisible && !isMissing) ? prankFreezeT : t;
+
+    var bgColor, textColor;
+    if(isCorrect){ bgColor='#00cc66'; textColor='#003322'; }
+    else if(isWrong){ bgColor='#cc2222'; textColor='#ffcccc'; }
+    else if(prankMonoPhase){
+      var monoL=40+8*Math.sin(i*0.8);
+      bgColor='hsl('+monoHue+',75%,'+monoL+'%)';
+      textColor='hsl('+monoHue+',70%,'+(monoL+2)+'%)';
+    } else {
+      var hue=(prankHuePhases[i]+cellT*ABYSS_HUE_SPEED)%360;
+      var bgL=32+18*Math.sin(cellT*0.0015+i*0.6);
+      bgColor='hsl('+hue+',85%,'+bgL+'%)';
+      if(isMissing){
+        if(prankFourVisible){
+          textColor='hsl(60,100%,92%)'; // bright yellow-white, unmissable
+        } else {
+          textColor=bgColor; // invisible
+        }
+      } else {
+        var blendFactor=Math.max(0,Math.sin(cellT*0.001+prankHuePhases[i]*0.07));
+        blendFactor=blendFactor*blendFactor*blendFactor;
+        var contrastL=bgL>42?6:94;
+        var textL=contrastL+blendFactor*(bgL-contrastL);
+        var textS=65-blendFactor*60;
+        textColor='hsl('+((hue+180)%360)+','+textS+'%,'+textL+'%)';
+      }
+    }
+
+    var c=centerOf(pts), a=areaOf(pts);
+    var fs=MOBILE?(a>5000?18:a>2500?15:a>1200?13:11):(a>12000?20:a>7000?17:a>3500?15:a>1500?13:11);
+    var g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.pointerEvents='none';
+
+    if(isMissing && prankFourVisible){
+      // Slide in from above
+      g.setAttribute('transform','translate(0,'+slideOffsetY.toFixed(1)+')');
+      // Pulsing red border once settled
+      var settled = slideProgress > 0.95;
+      var strokeColor2 = settled
+        ? 'rgba(255,'+(Math.floor((0.5+0.5*Math.sin(Date.now()*0.008))*80))+',0,1)'
+        : '#cc4400';
+      var strokeW2 = settled ? (3 + 2*Math.sin(Date.now()*0.008)) : 2;
+      var poly2=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      poly2.setAttribute('points',pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' '));
+      poly2.setAttribute('fill',bgColor);
+      poly2.setAttribute('stroke',strokeColor2);
+      poly2.setAttribute('stroke-width',strokeW2);
+      var txt2=document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt2.setAttribute('x',c.x); txt2.setAttribute('y',c.y+fs*0.38);
+      txt2.setAttribute('text-anchor','middle');
+      txt2.setAttribute('font-size',fs);
+      txt2.setAttribute('font-weight','bold');
+      txt2.setAttribute('font-family','Courier New,monospace');
+      txt2.setAttribute('fill',textColor);
+      txt2.style.pointerEvents='none';
+      txt2.textContent=num;
+      g.appendChild(poly2); g.appendChild(txt2);
+      if(prankPhase==='running'){
+        g.style.pointerEvents='auto';
+        g.style.cursor='pointer';
+        g.addEventListener('click',function(e){e.stopPropagation();prankShowMessage();});
+        g.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();prankShowMessage();},{passive:false});
+      }
+      svg.appendChild(g);
+      continue; // skip normal rendering below
+    }
+
+    var poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly.setAttribute('points',pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' '));
+    poly.setAttribute('fill',bgColor);
+    poly.setAttribute('stroke','#080c14');
+    poly.setAttribute('stroke-width','1.2');
+    if(isCorrect){poly.setAttribute('fill','#00cc66');poly.setAttribute('stroke','#00ff88');poly.setAttribute('stroke-width','3');}
+    if(isWrong){poly.setAttribute('fill','#cc2222');poly.setAttribute('stroke','#ff4444');poly.setAttribute('stroke-width','3');}
+    var txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x',c.x); txt.setAttribute('y',c.y+fs*0.38);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size',fs);
+    txt.setAttribute('font-weight','bold');
+    txt.setAttribute('font-family','Courier New,monospace');
+    txt.setAttribute('fill',textColor);
+    txt.style.pointerEvents='none';
+    txt.textContent=num;
+    g.appendChild(poly); g.appendChild(txt);
+    svg.appendChild(g);
+  }
+}
+
+function prankHandleClick(idx) {
+  if(prankPhase!=='running') return;
+  // If 4 has appeared and player clicks it — trigger prank, not normal flow
+  if(prankNumbers[idx]===PRANK_NUMBER && prankFourVisible){
+    prankShowMessage();
+    return;
+  }
+  if(prankNumbers[idx]===prankNext){
+    prankClickTimes.push(Date.now());
+    var foundNum = prankNext;
+    prankCorrect=idx; prankNext++;
+    setTimeout(function(){prankCorrect=-1;},350);
+    if(prankNext>prankTotal){setTimeout(function(){prankEndRun();},360);return;}
+    document.getElementById('target').innerHTML='ШУКАЙ: <span>'+prankNext+'</span>';
+    // Reshuffle
+    prankMonoPhase=true;
+    setTimeout(function(){
+      if(prankPhase!=='running') return;
+      buildPrank(Date.now()|0);
+      prankMonoPhase=false;
+    },100);
+    // Start the sector-reveal timer when player finds 3
+    if(foundNum === 3) {
+      clearTimeout(prankFourTimer);
+      var delay = 55000 + Math.random()*15000; // 55–70 seconds after finding 3
+      prankFourTimer = setTimeout(function(){
+        if(prankPhase!=='running') return;
+        revealFourSector();
+      }, delay);
+    }
+  } else {
+    prankWrong=idx; setTimeout(function(){prankWrong=-1;},400);
+  }
+}
+
+function prankDoStart() {
+  if(prankPhase!=='idle') return;
+  prankPhase='running'; prankStartTime=Date.now(); prankClickTimes=[prankStartTime];
+  var ol=document.getElementById('start-overlay-prank'); ol.classList.add('hidden'); ol.style.display='none';
+  document.getElementById('timer').className='running';
+  prankTimerID=setInterval(function(){
+    prankElapsed=Date.now()-prankStartTime;
+    document.getElementById('timer').textContent=fmt(prankElapsed);
+  },50);
+  document.getElementById('target').innerHTML='ШУКАЙ: <span>'+prankNext+'</span>';
+  // Timer starts ONLY after player finds 3 (see prankHandleClick)
+}
+
+// Slide-in animation for sector 4
+let prankFourRevealing = false;
+let prankFourSlideStart = 0;
+const PRANK_SLIDE_DURATION = 4000; // ms to slide into place
+let prankFourSlideFromY = 0; // starting Y offset (off-screen)
+let prankFreezeT = 0; // t value at which all other cells freeze
+
+function revealFourSector() {
+  prankFourVisible = true;
+  prankFourRevealing = true;
+  prankFourSlideStart = Date.now();
+  prankFreezeT = Date.now() - prankStartTime; // freeze all other cells now
+  prankFourSlideFromY = -(H + 120); // start above the field
+}
+
+function prankShowMessage() {
+  prankPhase='prank';
+  clearInterval(prankTimerID); prankTimerID=null;
+  clearTimeout(prankFourTimer);
+  prankFourRevealing=false;
+  document.getElementById('timer').className='done';
+  document.getElementById('target').innerHTML='&nbsp;';
+  var msg=document.getElementById('prank-msg');
+  document.getElementById('prank-msg-text').textContent='Ти теж це бачив? Я в шоці!';
+  document.getElementById('prank-msg-sub').textContent='— АНИМА';
+  msg.style.display='flex';
+}
+
+function prankDismiss() {
+  window.location.reload();
+}
+
+function prankEndRun() {
+  // Shouldn't normally happen (can't find all numbers without 4 appearing)
+  prankPhase='done';
+  clearInterval(prankTimerID);
+}
+
+function restartPrank() {
+  prankStop();
+  prankNext=1; prankPhase='idle'; prankElapsed=0; prankWrong=-1; prankCorrect=-1;
+  prankClickTimes=[]; prankMonoPhase=false; prankFourVisible=false;
+  prankFourRevealing=false; prankFreezeT=0;
+  document.getElementById('timer').textContent='00.00с';
+  document.getElementById('timer').className='';
+  document.getElementById('target').innerHTML='&nbsp;';
+  document.getElementById('target').className='';
+  prankFourRevealing=false; prankFourRevealAlpha=0;
+  document.getElementById('prank-msg').style.display='none';
+  document.getElementById('tbl-prank').setAttribute('viewBox','0 0 '+W+' '+H);
+  buildPrank(Date.now()|0);
+  var ov=document.getElementById('start-overlay-prank'); ov.style.display=''; ov.classList.remove('hidden');
+}
+
+</script>
+</body>
+</html>
