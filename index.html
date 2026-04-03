@@ -941,15 +941,16 @@ const RECTS_DEF = [
   { w: 60,  h: 120 },  // 1x2 cm
   { w: 30,  h: 180 },  // 0.5x3 cm
 ];
-const BASE_SPEED = 6.0;
+const BASE_SPEED = 6.0; // px/frame @ 60fps — kept for reference
+const BASE_SPEED_PPS = 360.0; // px/second = 6.0 * 60 — device-independent
 
 let pilotCanvas, pilotCtx;
 let pilotPhase = 'idle'; // idle | waiting | running | dead
-// waiting = game started but player hasn't clicked red square yet
 let pilotStartTime = 0, pilotElapsed = 0;
 let pilotTimerID = null, pilotAnimID = null;
 let pilotGameTime = 0;
 let pilotHistory = [];
+let pilotLastFrameTime = 0; // for delta time
 
 // Player
 let playerX = FX + (FW - SQ) / 2;
@@ -1124,6 +1125,7 @@ function pilotStart() {
   pilotPhase = 'waiting';
   pilotElapsed = 0;
   pilotGameTime = 0;
+  pilotLastFrameTime = 0;
   document.getElementById('timer').textContent = '00.00с';
   document.getElementById('timer').className = '';
   document.getElementById('target').innerHTML = 'КЛІКНИ НА ЧЕРВОНИЙ КВАДРАТ';
@@ -1140,16 +1142,19 @@ function pilotStop() {
   dragging = false;
 }
 
-function pilotLoop() {
+function pilotLoop(timestamp) {
   if (pilotPhase === 'idle' || pilotPhase === 'dead') return;
+  // Delta time — capped at 100ms to avoid huge jumps after tab switch
+  var delta = pilotLastFrameTime ? Math.min((timestamp - pilotLastFrameTime) / 1000, 0.1) : 1/60;
+  pilotLastFrameTime = timestamp;
   pilotGameTime = (pilotPhase === 'running') ? Date.now() - pilotStartTime : pilotGameTime;
-  if (pilotPhase === 'running') pilotUpdate();
+  if (pilotPhase === 'running') pilotUpdate(delta);
   pilotDraw();
   if (MOBILE) drawTouchpad();
   pilotAnimID = requestAnimationFrame(pilotLoop);
 }
 
-function pilotUpdate() {
+function pilotUpdate(delta) {
   var t = pilotGameTime;
 
   // Check field boundary — same rule on all devices
@@ -1161,7 +1166,7 @@ function pilotUpdate() {
   for (var i = 0; i < rects.length; i++) {
     var r = rects[i];
     var speedMult = 0.3 + 0.85 * Math.abs(Math.sin(t * 0.0008 + r.phase));
-    var speed = BASE_SPEED * speedMult;
+    var speed = BASE_SPEED_PPS * speedMult * delta; // px this frame, device-independent
 
     r.x += r.dx * speed;
     r.y += r.dy * speed;
