@@ -451,6 +451,27 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
     </div>
   </div>
 
+  <!-- SECTION: ЗЛОВИТИ 33 -->
+  <div class="menu-section" style="margin-top:16px;">
+    <div class="menu-section-title">Комбінований тест</div>
+    <div style="display:flex;justify-content:center;">
+      <div class="menu-card" style="max-width:400px;width:100%;cursor:default;">
+        <div class="card-num">06</div>
+        <div class="card-title">ЗЛОВИТИ 33</div>
+        <div class="card-desc">
+          Числа розлітаються по полю.<br>
+          Клікай по черзі — 1, 2, 3...<br>
+          Увага + реакція одночасно.
+        </div>
+        <div class="mode-pills">
+          <button class="mode-pill" onclick="event.stopPropagation();catchLaunch('single')">× 1</button>
+          <button class="mode-pill" onclick="event.stopPropagation();catchLaunch('x10')">× 10</button>
+          <button class="mode-pill" onclick="event.stopPropagation();catchLaunch('x30')">× 30</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SECTION: РОЗВАГИ -->
   <div class="menu-section" style="margin-top:16px;">
     <div class="menu-section-title">Розваги</div>
@@ -472,7 +493,7 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
         onmouseleave="this.style.opacity='0.55';this.style.borderColor='#1a1a1a'"
         ontouchstart="this.style.opacity='1'">
         <div class="card-num" style="font-size:32px;color:#1a1a1a;">05</div>
-        <div class="card-title" style="color:#cc2222;">ДЛЯ УПЕРТИХ</div>
+        <div class="card-title" style="color:#cc2222;">ДЛЯ УПОРОТИХ</div>
         <div class="card-desc" style="color:#2a2a2a;">Не рекомендовано.</div>
         <div class="card-tag" style="border-color:#1a1a1a;color:#1a1a1a;">⚠ ЕКСПЕРИМЕНТ</div>
       </div>
@@ -592,7 +613,7 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
       <img src="" id="overlay-logo-prank" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(200,0,0,0.9));margin-bottom:16px;">
       <div style="margin-top:20px;font-family:'Courier New',monospace;font-size:24px;font-weight:bold;letter-spacing:4px;color:#cc2222;padding:18px 36px;border:2px solid #cc2222;border-radius:4px;">▶ СТАРТ</div>
       <div style="margin-top:14px;font-size:10px;letter-spacing:3px;color:#2a1a1a;">НАТИСНИ БУДЬ-ДЕ</div>
-      <div style="margin-top:4px;font-size:9px;letter-spacing:2px;color:#1a1a2a;font-family:'Courier New',monospace;">ДЛЯ УПЕРТИХ В КРАЙ · v??</div>
+      <div style="margin-top:4px;font-size:9px;letter-spacing:2px;color:#1a1a2a;font-family:'Courier New',monospace;">ДЛЯ УПОРОТИХ В КРАЙ · v??</div>
     </div>
     <div id="canvas-wrap-prank" style="position:relative;border:1px solid #1a3050;border-radius:3px;overflow:hidden;box-shadow:0 0 40px rgba(0,80,160,0.15);width:100%;">
       <svg id="tbl-prank" style="display:block;width:100%;height:auto;background:#0d1520;"></svg>
@@ -618,6 +639,51 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
   </div>
 </div>
 
+<!-- ===== SCREEN: CATCH 33 ===== -->
+<div id="screen-catch" class="screen">
+  <div style="width:100%;max-width:900px;margin:0 auto;position:relative;">
+
+    <!-- Overlay: session select + countdown + results -->
+    <div id="catch-overlay" style="position:absolute;inset:0;z-index:20;background:rgba(9,12,18,0.97);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:3px;backdrop-filter:blur(4px);">
+      <img id="catch-logo" src="" style="width:60px;height:60px;object-fit:contain;
+        filter:drop-shadow(0 0 14px rgba(200,0,0,0.8));margin-bottom:16px;">
+      <div id="catch-overlay-title" style="font-family:'Courier New',monospace;font-size:20px;
+        font-weight:bold;letter-spacing:3px;color:#00e0ff;margin-bottom:8px;">ЗЛОВИТИ 33</div>
+      <div id="catch-overlay-body" style="font-family:'Courier New',monospace;font-size:11px;
+        letter-spacing:2px;color:#3a6a8a;text-align:center;line-height:2;"></div>
+      <div id="catch-countdown-num" style="font-family:'Courier New',monospace;font-size:80px;
+        font-weight:bold;color:#00e0ff;display:none;line-height:1;"></div>
+      <button id="catch-start-btn" onclick="catchBeginCountdown()"
+        style="margin-top:20px;font-size:13px;letter-spacing:3px;display:none;">▶ СТАРТ</button>
+      <div id="catch-results-wrap" style="display:none;text-align:center;width:100%;max-width:360px;">
+        <div id="catch-results-list" style="font-family:'Courier New',monospace;font-size:10px;
+          color:#4a8aaa;line-height:2;margin-bottom:8px;"></div>
+        <div id="catch-results-avg" style="font-family:'Courier New',monospace;font-size:16px;
+          font-weight:bold;color:#00ffaa;letter-spacing:2px;margin-bottom:16px;"></div>
+        <button onclick="catchLaunch(catchSessionMode)" style="font-size:11px;letter-spacing:2px;">↺ ЗНОВУ</button>
+        <button onclick="goMenu()" style="font-size:11px;letter-spacing:2px;margin-left:8px;">← МЕНЮ</button>
+      </div>
+    </div>
+
+    <!-- Round result flash -->
+    <div id="catch-round-flash" style="position:absolute;inset:0;z-index:15;
+      display:none;align-items:center;justify-content:center;pointer-events:none;">
+      <div id="catch-round-flash-text" style="font-family:'Courier New',monospace;font-size:36px;
+        font-weight:bold;color:#00ffaa;text-shadow:0 0 20px rgba(0,255,170,0.8);"></div>
+    </div>
+
+    <canvas id="catch-canvas" style="display:block;width:100%;height:auto;
+      background:#0a1420;border:1px solid #1a3050;border-radius:3px;cursor:crosshair;"></canvas>
+  </div>
+
+  <div class="controls-bar" style="margin-top:8px;">
+    <div id="catch-session-info" style="font-family:'Courier New',monospace;font-size:10px;
+      color:#2a5a7a;letter-spacing:1px;"></div>
+  </div>
+</div>
+
 <script>
 // ===================== LOGO =====================
 const LOGO_SRC = 'data:image/webp;base64,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';
@@ -626,6 +692,7 @@ document.getElementById('overlay-logo').src = LOGO_SRC;
 document.getElementById('pilot-overlay-logo').src = LOGO_SRC;
 document.getElementById('overlay-logo-chaos').src = LOGO_SRC;
   document.getElementById('overlay-logo-abyss').src = LOGO_SRC;
+  document.getElementById('catch-logo').src = LOGO_SRC;
   document.getElementById('overlay-logo-prank').src = LOGO_SRC;
 
 // ===================== OBS MODE =====================
@@ -736,20 +803,23 @@ function showTest(name) {
   document.getElementById('screen-chaos').classList.remove('active');
   document.getElementById('screen-abyss').classList.remove('active');
   document.getElementById('screen-prank').classList.remove('active');
+  document.getElementById('screen-catch').classList.remove('active');
   document.getElementById('screen-' + name).classList.add('active');
   document.getElementById('back-btn').style.display = 'block';
-  document.getElementById('stats').style.display = (name === 'obs' || name === 'chaos' || name === 'abyss' || name === 'prank') ? 'flex' : 'none';
+  document.getElementById('stats').style.display = (name === 'obs' || name === 'chaos' || name === 'abyss' || name === 'prank' || name === 'catch') ? 'flex' : 'none';
   document.getElementById('hdr-sub').textContent =
     name === 'obs' ? 'ТРЕНАЖЕР СПОСТЕРЕЖЛИВОСТІ · v2.0' :
     name === 'pilot' ? 'ТЕСТ ПІЛОТА · v2.0' :
     name === 'chaos' ? 'ХАОС · УСКЛАДНЕНА ВЕРСІЯ · v2.0' :
     name === 'abyss' ? 'БЕЗОДНЯ · МАКСИМАЛЬНА СКЛАДНІСТЬ · v2.0' :
-    name === 'prank' ? 'ДЛЯ УПЕРТИХ В КРАЙ · v??' : 'ТРЕНУВАЛЬНА ПЛАТФОРМА · v2.0';
+    name === 'prank' ? 'ДЛЯ УПОРОТИХ В КРАЙ · v??' :
+    name === 'catch' ? 'ЗЛОВИТИ 33 · v1.0' : 'ТРЕНУВАЛЬНА ПЛАТФОРМА · v2.0';
   if (name === 'obs') { initObs(); }
   if (name === 'pilot') { initPilot(); }
   if (name === 'chaos') { initChaos(); }
   if (name === 'abyss') { initAbyss(); }
   if (name === 'prank') { initPrank(); }
+  if (name === 'catch') { initCatch(); }
 }
 function goMenu() {
   // Full reset — no pausing, everything starts fresh next time
@@ -799,6 +869,11 @@ function goMenu() {
   var abOv=document.getElementById('start-overlay-abyss'); if(abOv){abOv.style.display='';abOv.classList.remove('hidden');}
   abyssInited=false;
 
+  // Catch reset
+  catchStop();
+  catchPhase='idle'; catchInited=false; catchSessionTimes=[];
+  var caOv=document.getElementById('catch-overlay'); if(caOv){caOv.style.display='flex';}
+
   // Prank reset
   prankStop();
   prankNext=1; prankPhase='idle'; prankInited=false; prankMonoPhase=false;
@@ -815,6 +890,7 @@ function goMenu() {
   document.getElementById('screen-chaos').classList.remove('active');
   document.getElementById('screen-abyss').classList.remove('active');
   document.getElementById('screen-prank').classList.remove('active');
+  document.getElementById('screen-catch').classList.remove('active');
   document.getElementById('back-btn').style.display = 'none';
   document.getElementById('stats').style.display = 'none';
   document.getElementById('hdr-sub').textContent = 'ТРЕНУВАЛЬНА ПЛАТФОРМА · v2.0';
@@ -2279,6 +2355,353 @@ function restartPrank() {
   document.getElementById('tbl-prank').setAttribute('viewBox','0 0 '+W+' '+H);
   buildPrank(Date.now()|0);
   var ov=document.getElementById('start-overlay-prank'); ov.style.display=''; ov.classList.remove('hidden');
+}
+
+// ===================== CATCH 33 =====================
+const CATCH_TOTAL = 33;
+const CATCH_SQ_D = 900; // desktop field width
+const CATCH_SQ_M = 400; // mobile field width
+const CATCH_FH_D = 560; // desktop field height
+const CATCH_FH_M = 520; // mobile field height
+const CATCH_SZ_D = 54;  // square size desktop
+const CATCH_SZ_M = 44;  // square size mobile
+
+let catchCanvas, catchCtx;
+let catchFW, catchFH, catchSZ; // actual field dimensions
+let catchPhase = 'idle'; // idle|countdown|scatter|running|rounddone|done
+let catchInited = false;
+let catchSquares = [];
+let catchNext = 1;
+let catchStartTime = 0, catchElapsed = 0;
+let catchTimerID = null, catchAnimID = null;
+let catchCountdownVal = 3;
+let catchCountdownTimer = null;
+let catchScatterTimer = null;
+let catchSessionMode = 'single';
+let catchSessionTimes = [];
+let catchSessionTarget = 1;
+let catchCurrentRound = 0;
+let catchLastFrame = 0;
+
+const CATCH_BASE_PPS = 180; // px/sec base speed
+
+function catchStop() {
+  cancelAnimationFrame(catchAnimID); catchAnimID = null;
+  clearInterval(catchTimerID); catchTimerID = null;
+  clearTimeout(catchCountdownTimer); catchCountdownTimer = null;
+  clearTimeout(catchScatterTimer); catchScatterTimer = null;
+}
+
+function catchLaunch(mode) {
+  catchSessionMode = mode;
+  catchSessionTarget = mode === 'x10' ? 10 : mode === 'x30' ? 30 : 1;
+  catchSessionTimes = [];
+  catchCurrentRound = 0;
+  showTest('catch');
+}
+
+function initCatch() {
+  if (catchInited) return; catchInited = true;
+  catchCanvas = document.getElementById('catch-canvas');
+  catchFW = MOBILE ? CATCH_SQ_M : CATCH_SQ_D;
+  catchFH = MOBILE ? CATCH_FH_M : CATCH_FH_D;
+  catchSZ = MOBILE ? CATCH_SZ_M : CATCH_SZ_D;
+  catchCanvas.width = catchFW;
+  catchCanvas.height = catchFH;
+  catchCtx = catchCanvas.getContext('2d');
+
+  // Click handler
+  function getCanvasPos(e) {
+    var r = catchCanvas.getBoundingClientRect();
+    var sx = catchFW / r.width, sy = catchFH / r.height;
+    var src = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+    return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
+  }
+  function onCatchClick(e) {
+    if (catchPhase !== 'running') return;
+    e.preventDefault();
+    var p = getCanvasPos(e);
+    for (var i = catchSquares.length - 1; i >= 0; i--) {
+      var s = catchSquares[i];
+      if (p.x >= s.x && p.x <= s.x + catchSZ && p.y >= s.y && p.y <= s.y + catchSZ) {
+        if (s.num === catchNext) {
+          s.found = true;
+          catchNext++;
+          if (catchNext > CATCH_TOTAL) {
+            catchEndRound();
+          } else {
+            document.getElementById('target').innerHTML = 'ШУКАЙ: <span>' + catchNext + '</span>';
+          }
+        }
+        return;
+      }
+    }
+  }
+  catchCanvas.addEventListener('mousedown', onCatchClick);
+  catchCanvas.addEventListener('touchstart', onCatchClick, { passive: false });
+
+  document.getElementById('catch-logo').src = document.getElementById('hdr-logo').src;
+  catchShowStart();
+}
+
+function catchShowStart() {
+  catchPhase = 'idle';
+  var modeLabel = catchSessionMode === 'x10' ? 'СЕСІЯ × 10' : catchSessionMode === 'x30' ? 'СЕСІЯ × 30' : 'ОДИНОЧНА СЕСІЯ';
+  document.getElementById('catch-overlay-title').textContent = 'ЗЛОВИТИ 33';
+  document.getElementById('catch-overlay-body').textContent = modeLabel;
+  document.getElementById('catch-countdown-num').style.display = 'none';
+  document.getElementById('catch-start-btn').style.display = 'block';
+  document.getElementById('catch-results-wrap').style.display = 'none';
+  document.getElementById('catch-overlay').style.display = 'flex';
+  catchBuildSquares();
+  catchDraw();
+}
+
+function catchBuildSquares() {
+  catchSquares = [];
+  var cx = catchFW / 2, cy = catchFH / 2;
+  var nums = [];
+  for (var k = 1; k <= CATCH_TOTAL; k++) nums.push(k);
+  // Fisher-Yates shuffle
+  for (var i = nums.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = nums[i]; nums[i] = nums[j]; nums[j] = tmp;
+  }
+  for (var n = 0; n < CATCH_TOTAL; n++) {
+    var angle = Math.random() * Math.PI * 2;
+    var speed = CATCH_BASE_PPS * (0.5 + Math.random() * 0.8);
+    catchSquares.push({
+      x: cx - catchSZ / 2 + (Math.random() - 0.5) * 30,
+      y: cy - catchSZ / 2 + (Math.random() - 0.5) * 30,
+      dx: Math.cos(angle),
+      dy: Math.sin(angle),
+      speed: speed,
+      phase: Math.random() * Math.PI * 2,
+      num: nums[n],
+      found: false
+    });
+  }
+}
+
+function catchBeginCountdown() {
+  document.getElementById('catch-start-btn').style.display = 'none';
+  document.getElementById('catch-overlay-body').style.display = 'none';
+  document.getElementById('catch-overlay-title').style.display = 'none';
+  catchPhase = 'countdown';
+  catchCountdownVal = 3;
+  catchTickCountdown();
+  catchLastFrame = 0;
+  catchAnimID = requestAnimationFrame(catchLoop);
+}
+
+function catchTickCountdown() {
+  var el = document.getElementById('catch-countdown-num');
+  el.style.display = 'block';
+  if (catchCountdownVal > 0) {
+    el.textContent = catchCountdownVal;
+    el.style.color = '#00e0ff';
+    catchCountdownVal--;
+    catchCountdownTimer = setTimeout(catchTickCountdown, 900);
+  } else {
+    el.textContent = 'GO!';
+    el.style.color = '#00ffaa';
+    // Scatter phase
+    catchPhase = 'scatter';
+    catchScatterTimer = setTimeout(function() {
+      // Hide overlay, start timer
+      document.getElementById('catch-overlay').style.display = 'none';
+      catchPhase = 'running';
+      catchNext = 1;
+      catchStartTime = Date.now();
+      catchTimerID = setInterval(function() {
+        catchElapsed = Date.now() - catchStartTime;
+        document.getElementById('timer').textContent = fmt(catchElapsed);
+      }, 50);
+      document.getElementById('timer').className = 'running';
+      document.getElementById('target').innerHTML = 'ШУКАЙ: <span>1</span>';
+      var info = catchSessionMode === 'single' ? '' :
+        'Раунд ' + (catchCurrentRound + 1) + ' / ' + catchSessionTarget;
+      document.getElementById('catch-session-info').textContent = info;
+    }, 1200);
+  }
+}
+
+function catchLoop(timestamp) {
+  if (catchPhase === 'idle' || catchPhase === 'done') return;
+  var delta = catchLastFrame ? Math.min((timestamp - catchLastFrame) / 1000, 0.1) : 1/60;
+  catchLastFrame = timestamp;
+  catchUpdate(delta, timestamp);
+  catchDraw();
+  catchAnimID = requestAnimationFrame(catchLoop);
+}
+
+function catchUpdate(delta, timestamp) {
+  var t = timestamp || 0;
+  var isScatter = catchPhase === 'scatter';
+  var cx = catchFW / 2, cy = catchFH / 2;
+
+  for (var i = 0; i < catchSquares.length; i++) {
+    var s = catchSquares[i];
+    if (s.found) continue;
+
+    var speed;
+    if (isScatter) {
+      // Scatter outward from center fast
+      speed = CATCH_BASE_PPS * 3.5;
+      var fromCX = s.x + catchSZ/2 - cx, fromCY = s.y + catchSZ/2 - cy;
+      var dist = Math.sqrt(fromCX*fromCX + fromCY*fromCY) || 1;
+      s.dx = fromCX / dist;
+      s.dy = fromCY / dist;
+    } else {
+      // Oscillating speed
+      var mult = 0.35 + 0.85 * Math.abs(Math.sin(t * 0.0007 + s.phase));
+      speed = CATCH_BASE_PPS * mult;
+    }
+
+    s.x += s.dx * speed * delta;
+    s.y += s.dy * speed * delta;
+
+    // Bounce
+    if (s.x < 0) { s.x = 0; s.dx = Math.abs(s.dx); }
+    if (s.x + catchSZ > catchFW) { s.x = catchFW - catchSZ; s.dx = -Math.abs(s.dx); }
+    if (s.y < 0) { s.y = 0; s.dy = Math.abs(s.dy); }
+    if (s.y + catchSZ > catchFH) { s.y = catchFH - catchSZ; s.dy = -Math.abs(s.dy); }
+  }
+}
+
+function catchDraw() {
+  if (!catchCtx) return;
+  var ctx = catchCtx;
+  ctx.fillStyle = '#0a1420';
+  ctx.fillRect(0, 0, catchFW, catchFH);
+
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(20,60,100,0.3)';
+  ctx.lineWidth = 1;
+  for (var gx = 60; gx < catchFW; gx += 60) {
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, catchFH); ctx.stroke();
+  }
+  for (var gy = 60; gy < catchFH; gy += 60) {
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(catchFW, gy); ctx.stroke();
+  }
+
+  var fs = Math.round(catchSZ * 0.38);
+  for (var i = 0; i < catchSquares.length; i++) {
+    var s = catchSquares[i];
+    if (s.found) continue;
+    var isNext = (s.num === catchNext && catchPhase === 'running');
+
+    // Background
+    ctx.fillStyle = isNext ? '#0a2a0a' : '#0d1a2a';
+    ctx.fillRect(s.x, s.y, catchSZ, catchSZ);
+
+    // Border
+    if (isNext) {
+      var pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.008);
+      ctx.strokeStyle = 'rgba(0,255,100,' + (0.6 + 0.4 * pulse) + ')';
+      ctx.lineWidth = 2;
+    } else {
+      ctx.strokeStyle = '#1a4060';
+      ctx.lineWidth = 1;
+    }
+    ctx.strokeRect(s.x, s.y, catchSZ, catchSZ);
+
+    // Number
+    ctx.fillStyle = isNext ? '#00ff88' : '#5a9aaa';
+    ctx.font = 'bold ' + fs + 'px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s.num, s.x + catchSZ/2, s.y + catchSZ/2);
+  }
+}
+
+function catchEndRound() {
+  catchPhase = 'rounddone';
+  clearInterval(catchTimerID); catchTimerID = null;
+  catchElapsed = Date.now() - catchStartTime;
+  catchSessionTimes.push(catchElapsed);
+  catchCurrentRound++;
+
+  document.getElementById('timer').textContent = fmt(catchElapsed);
+  document.getElementById('timer').className = 'done';
+  document.getElementById('target').textContent = '✓ РАУНД ' + catchCurrentRound;
+
+  // Flash result
+  var flash = document.getElementById('catch-round-flash');
+  var flashTxt = document.getElementById('catch-round-flash-text');
+  flashTxt.textContent = fmt(catchElapsed);
+  flash.style.display = 'flex';
+  setTimeout(function() { flash.style.display = 'none'; }, 900);
+
+  if (catchCurrentRound >= catchSessionTarget) {
+    setTimeout(catchShowResults, 1000);
+  } else {
+    // Next round after 1.5s
+    setTimeout(function() {
+      catchBuildSquares();
+      catchLastFrame = 0;
+      catchPhase = 'countdown';
+      catchCountdownVal = 3;
+      document.getElementById('catch-overlay-title').style.display = 'block';
+      document.getElementById('catch-overlay-title').textContent = 'РАУНД ' + (catchCurrentRound + 1);
+      document.getElementById('catch-overlay-body').style.display = 'block';
+      document.getElementById('catch-overlay-body').textContent =
+        'Кращий: ' + fmt(Math.min.apply(null, catchSessionTimes));
+      document.getElementById('catch-overlay').style.display = 'flex';
+      document.getElementById('timer').className = '';
+      document.getElementById('timer').textContent = '00.00с';
+      document.getElementById('target').innerHTML = '&nbsp;';
+      catchTickCountdown();
+    }, 1500);
+  }
+}
+
+function catchShowResults() {
+  catchPhase = 'done';
+  var total = catchSessionTimes.length;
+  var avg = catchSessionTimes.reduce(function(a,b){return a+b;},0) / total;
+  var best = Math.min.apply(null, catchSessionTimes);
+  var worst = Math.max.apply(null, catchSessionTimes);
+
+  var listHTML = catchSessionTimes.map(function(t,i){
+    var mark = t===best ? ' ★' : t===worst ? ' ▼' : '';
+    return '<div>#'+(i+1)+' — '+fmt(t)+mark+'</div>';
+  }).join('');
+
+  document.getElementById('catch-results-list').innerHTML = listHTML;
+  document.getElementById('catch-results-avg').textContent =
+    'СЕРЕДНЄ: ' + fmt(Math.round(avg));
+  document.getElementById('catch-countdown-num').style.display = 'none';
+  document.getElementById('catch-overlay-title').style.display = 'block';
+  document.getElementById('catch-overlay-title').textContent = 'СЕСІЯ ЗАВЕРШЕНА';
+  document.getElementById('catch-overlay-body').style.display = 'none';
+  document.getElementById('catch-results-wrap').style.display = 'block';
+  document.getElementById('catch-overlay').style.display = 'flex';
+
+  document.getElementById('catch-session-info').textContent = '';
+  document.getElementById('timer').className = 'done';
+  document.getElementById('target').textContent = '✓ ЗАВЕРШЕНО';
+}
+
+function catchReset() {
+  catchStop();
+  catchPhase = 'idle';
+  catchSessionTimes = [];
+  catchCurrentRound = 0;
+  document.getElementById('timer').textContent = '00.00с';
+  document.getElementById('timer').className = '';
+  document.getElementById('target').innerHTML = '&nbsp;';
+  document.getElementById('target').className = '';
+  document.getElementById('catch-session-info').textContent = '';
+  document.getElementById('catch-overlay-title').style.display = 'block';
+  document.getElementById('catch-overlay-body').style.display = 'block';
+  document.getElementById('catch-overlay-title').textContent = 'ЗЛОВИТИ 33';
+  document.getElementById('catch-start-btn').style.display = 'block';
+  document.getElementById('catch-results-wrap').style.display = 'none';
+  document.getElementById('catch-countdown-num').style.display = 'none';
+  document.getElementById('catch-overlay').style.display = 'flex';
+  catchBuildSquares();
+  if (catchCtx) catchDraw();
 }
 
 </script>
