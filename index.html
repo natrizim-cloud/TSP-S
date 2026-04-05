@@ -694,7 +694,7 @@ function buildDeformData(numbers, seed) {
 // Get display text for a number given current mode
 function getDisplayText(n) {
   if(obsMode==='math') return arithExprs[n]||String(n);
-  if(obsMode==='text') return numToUa(n);
+  if(obsMode==='text') return MOBILE ? String(n) : numToUa(n);
   return String(n);
 }
 
