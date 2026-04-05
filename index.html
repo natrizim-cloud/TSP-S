@@ -2462,21 +2462,24 @@ function catchBuildSquares() {
   var cx = catchFW / 2, cy = catchFH / 2;
   var nums = [];
   for (var k = 1; k <= CATCH_TOTAL; k++) nums.push(k);
-  // Fisher-Yates shuffle
   for (var i = nums.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
     var tmp = nums[i]; nums[i] = nums[j]; nums[j] = tmp;
   }
   for (var n = 0; n < CATCH_TOTAL; n++) {
-    var angle = Math.random() * Math.PI * 2;
-    var speed = CATCH_BASE_PPS * (0.5 + Math.random() * 0.8);
+    // Guaranteed unique scatter angle: evenly spaced + small random jitter
+    var scatterAngle = (n / CATCH_TOTAL) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+    // Running direction: random, independent from scatter
+    var runAngle = Math.random() * Math.PI * 2;
     catchSquares.push({
-      x: cx - catchSZ / 2 + (Math.random() - 0.5) * 30,
-      y: cy - catchSZ / 2 + (Math.random() - 0.5) * 30,
-      dx: Math.cos(angle),
-      dy: Math.sin(angle),
-      speed: speed,
-      phase: Math.random() * Math.PI * 2,
+      x: cx - catchSZ / 2 + (Math.random() - 0.5) * 20,
+      y: cy - catchSZ / 2 + (Math.random() - 0.5) * 20,
+      dx: Math.cos(runAngle),
+      dy: Math.sin(runAngle),
+      scatterDx: Math.cos(scatterAngle),
+      scatterDy: Math.sin(scatterAngle),
+      phase: Math.random() * Math.PI * 2,   // speed wave phase
+      dirTimer: Math.random() * 3,           // time until next direction change (s)
       num: nums[n],
       found: false
     });
@@ -2538,7 +2541,6 @@ function catchLoop(timestamp) {
 function catchUpdate(delta, timestamp) {
   var t = timestamp || 0;
   var isScatter = catchPhase === 'scatter';
-  var cx = catchFW / 2, cy = catchFH / 2;
 
   for (var i = 0; i < catchSquares.length; i++) {
     var s = catchSquares[i];
@@ -2546,16 +2548,24 @@ function catchUpdate(delta, timestamp) {
 
     var speed;
     if (isScatter) {
-      // Scatter outward from center fast
-      speed = CATCH_BASE_PPS * 3.5;
-      var fromCX = s.x + catchSZ/2 - cx, fromCY = s.y + catchSZ/2 - cy;
-      var dist = Math.sqrt(fromCX*fromCX + fromCY*fromCY) || 1;
-      s.dx = fromCX / dist;
-      s.dy = fromCY / dist;
+      // Each square has its own guaranteed unique scatter direction
+      s.dx = s.scatterDx;
+      s.dy = s.scatterDy;
+      speed = CATCH_BASE_PPS * 3.2;
     } else {
-      // Oscillating speed
-      var mult = 0.35 + 0.85 * Math.abs(Math.sin(t * 0.0007 + s.phase));
-      speed = CATCH_BASE_PPS * mult;
+      // Speed goes fully to 0 at sin=0 and peaks at sin=1
+      var rawSin = Math.sin(t * 0.0006 + s.phase);
+      var mult = rawSin * rawSin; // 0..1, smooth, goes to 0
+      speed = CATCH_BASE_PPS * 1.4 * mult;
+
+      // Change direction when nearly stopped (speed < 5% of max)
+      s.dirTimer -= delta;
+      if (mult < 0.05 && s.dirTimer <= 0) {
+        var newAngle = Math.random() * Math.PI * 2;
+        s.dx = Math.cos(newAngle);
+        s.dy = Math.sin(newAngle);
+        s.dirTimer = 2 + Math.random() * 3; // next change in 2-5 sec
+      }
     }
 
     s.x += s.dx * speed * delta;
@@ -2589,25 +2599,14 @@ function catchDraw() {
   for (var i = 0; i < catchSquares.length; i++) {
     var s = catchSquares[i];
     if (s.found) continue;
-    var isNext = (s.num === catchNext && catchPhase === 'running');
 
-    // Background
-    ctx.fillStyle = isNext ? '#0a2a0a' : '#0d1a2a';
+    ctx.fillStyle = '#0d1a2a';
     ctx.fillRect(s.x, s.y, catchSZ, catchSZ);
-
-    // Border
-    if (isNext) {
-      var pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.008);
-      ctx.strokeStyle = 'rgba(0,255,100,' + (0.6 + 0.4 * pulse) + ')';
-      ctx.lineWidth = 2;
-    } else {
-      ctx.strokeStyle = '#1a4060';
-      ctx.lineWidth = 1;
-    }
+    ctx.strokeStyle = '#1a4a6a';
+    ctx.lineWidth = 1;
     ctx.strokeRect(s.x, s.y, catchSZ, catchSZ);
 
-    // Number
-    ctx.fillStyle = isNext ? '#00ff88' : '#5a9aaa';
+    ctx.fillStyle = '#5a9aaa';
     ctx.font = 'bold ' + fs + 'px Courier New';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
