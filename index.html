@@ -653,28 +653,25 @@ function buildArithExprs(numbers, seed) {
   for(var k=0;k<numbers.length;k++){
     var n=numbers[k];
     if(arithExprs[n]) continue;
-    initRng(seed + n*137 + 9999);
     var expr;
-    // Find all valid operations for n
-    var ops = [];
-    ops.push('add'); // always possible
-    ops.push('sub'); // always possible
-    // multiplication: find factor pairs where both ≤ 12
+    // Find valid operations for n
+    var ops = ['add','sub'];
     var factors = [];
     for(var f=2;f<=Math.min(n,12);f++) if(n%f===0 && n/f<=12 && n/f>=2) factors.push(f);
     if(factors.length>0) ops.push('mul');
-    var op = ops[Math.floor(rng()*ops.length)];
+    var op = ops[Math.floor(Math.random()*ops.length)];
     if(op==='add'){
       var maxA = Math.min(n-1, 19);
-      var a = Math.floor(rng()*maxA)+1;
-      expr = a+'+\u200b'+(n-a); // zero-width space for rendering clarity
+      var a = Math.floor(Math.random()*maxA)+1;
+      expr = a+'+\u200b'+(n-a);
     } else if(op==='sub'){
-      var b = Math.floor(rng()*15)+1;
+      var b = Math.floor(Math.random()*15)+1;
       expr = (n+b)+'\u2212'+b;
     } else {
-      var fi = Math.floor(rng()*factors.length);
+      var fi = Math.floor(Math.random()*factors.length);
       var f2 = factors[fi];
-      expr = f2+'\u00d7'+(n/f2);
+      // randomly swap order: 2×6 or 6×2
+      expr = Math.random()<0.5 ? f2+'\u00d7'+(n/f2) : (n/f2)+'\u00d7'+f2;
     }
     arithExprs[n]=expr;
   }
