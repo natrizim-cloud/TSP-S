@@ -332,10 +332,30 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
   .platform-header { margin-bottom: 4px; }
   #stats { gap: 10px; }
 }
-#tbl g { cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0); }
-#tbl { touch-action: manipulation; -webkit-user-select: none; }
-#tbl-chaos g { cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0); }
-#tbl-abyss g { cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+#tbl g, #tbl-chaos g, #tbl-abyss g, #tbl-prank g { cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+#tbl, #tbl-chaos, #tbl-abyss, #tbl-prank { touch-action: manipulation; -webkit-user-select: none; }
+
+/* === MODE PILLS === */
+.mode-pills { display:flex; gap:5px; flex-wrap:wrap; margin-top:14px; }
+.mode-pill {
+  padding:4px 10px; font-family:'Courier New',monospace; font-size:9px;
+  letter-spacing:1px; border:1px solid #2a4a6a; color:#5a9aaa;
+  background:transparent; cursor:pointer; border-radius:2px;
+  transition:all 0.15s; -webkit-tap-highlight-color:transparent;
+}
+.mode-pill:hover, .mode-pill.active { background:#0d2040; color:#00e0ff; border-color:#00e0ff; }
+.menu-section { width:100%; max-width:100%; }
+.menu-section-title {
+  font-size:8px; letter-spacing:3px; color:#1a3a5a; text-transform:uppercase;
+  margin-bottom:10px; text-align:center; border-bottom:1px solid #0d1a28; padding-bottom:6px;
+}
+.menu-fun { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:4px; }
+.menu-card-sm { width:220px; padding:18px 16px; }
+@media(max-width:600px) {
+  .menu-col { max-width:100%; width:100%; min-width:unset; }
+  .menu-fun .menu-card-sm { width:100%; max-width:100%; }
+  .mode-pills { gap:4px; }
+}
 
 /* === PILOT VIEWPORT FIT === */
 #pilot-wrap {
@@ -369,81 +389,97 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
 <!-- ===== SCREEN: MENU ===== -->
 <div id="screen-menu" class="screen active">
   <div class="menu-title">Оберіть тренажер</div>
-  <div class="menu-grid">
 
-    <div class="menu-col">
+  <!-- SECTION: ТЕСТИ УВАГИ -->
+  <div class="menu-section">
+    <div class="menu-section-title">Тести уваги</div>
+    <div class="menu-grid" style="align-items:stretch;">
 
-      <div class="menu-card" onclick="showTest('obs')">
-        <div class="card-num">01</div>
-        <div class="card-title">СПОСТЕРЕЖЛИВІСТЬ</div>
-        <div class="card-desc">
-          Знайди числа від 1 до 100<br>
-          у правильній послідовності.<br>
-          Тримай погляд у центрі —<br>
-          рухаються лише очі.
+      <div class="menu-col">
+        <div class="menu-card" onclick="launchMode('obs','standard')" style="cursor:default;">
+          <div class="card-num">01</div>
+          <div class="card-title">СПОСТЕРЕЖЛИВІСТЬ</div>
+          <div class="card-desc">
+            Знайди числа 1–100 по порядку.<br>
+            Тримай погляд у центрі.
+          </div>
+          <div class="mode-pills">
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('obs','standard')">STD</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('obs','math')">± MATH</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('obs','mirror')">⊟ ДЗЕРК</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('obs','text')">АБВ ТЕКСТ</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('obs','deform')">~ ХАОС</button>
+          </div>
         </div>
-        <div class="card-tag">БАЗОВА ВЕРСІЯ</div>
       </div>
 
-      <div class="menu-card" onclick="showTest('chaos')">
-        <div class="card-num">03</div>
-        <div class="card-title">ХАОС</div>
-        <div class="card-desc">
-          Ячейки переливають кольорами.<br>
-          Цифра іноді зливається з фоном —<br>
-          підвищена складність.
+      <div class="menu-col">
+        <div class="menu-card" onclick="launchMode('abyss','standard')" style="cursor:default;">
+          <div class="card-num">04</div>
+          <div class="card-title">БЕЗОДНЯ</div>
+          <div class="card-desc">
+            Таблиця перемішується.<br>
+            Тільки для найсміливіших.
+          </div>
+          <div class="mode-pills">
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','standard')">STD</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','math')">± MATH</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','mirror')">⊟ ДЗЕРК</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','text')">АБВ ТЕКСТ</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','deform')">~ ХАОС</button>
+          </div>
         </div>
-        <div class="card-tag">УСКЛАДНЕНА ВЕРСІЯ</div>
-      </div>
-
-      <div class="menu-card" onclick="showTest('abyss')">
-        <div class="card-num">04</div>
-        <div class="card-title">БЕЗОДНЯ</div>
-        <div class="card-desc">
-          Тільки для найсміливіших.<br>
-          Якщо пройшов — розкажи нам.
-        </div>
-        <div class="card-tag">МАКСИМАЛЬНА СКЛАДНІСТЬ</div>
       </div>
 
     </div>
+  </div>
 
-    <div class="menu-col">
-
-      <div class="menu-card menu-card--tall" onclick="showTest('pilot')">
+  <!-- SECTION: ТЕСТ РЕАКЦІЇ -->
+  <div class="menu-section" style="margin-top:16px;">
+    <div class="menu-section-title">Тест реакції</div>
+    <div style="display:flex;justify-content:center;">
+      <div class="menu-card" onclick="showTest('pilot')" style="max-width:400px;width:100%;">
         <div class="card-num">02</div>
         <div class="card-title">ТЕСТ ПІЛОТА</div>
         <div class="card-desc">
-          Утримуй червоний квадрат<br>
-          мишею в безпечній зоні.<br>
-          Уникай синіх об'єктів —<br>
-          вони рухаються хвилями.<br><br>
-          Кажуть, американські військові<br>
-          пілоти тримають понад 2 хвилини.
+          Утримуй червоний квадрат у безпечній зоні.<br>
+          Уникай синіх об'єктів — вони рухаються хвилями.<br><br>
+          Американські пілоти тримають понад 2 хвилини.
         </div>
         <div class="card-tag">РЕАКЦІЯ · СТЕЖЕННЯ</div>
       </div>
-
     </div>
-
   </div>
-  <div class="menu-version">v2.0 · ТСП «ЩИТ» · 2026</div>
-  <!-- prank card inside menu screen so it hides with menu -->
-  <div id="prank-card-wrap" style="margin-top:12px;width:100%;max-width:580px;padding:0 16px;">
-    <div class="menu-card" onclick="showTest('prank')" style="border-color:#1a1a1a;opacity:0.55;transition:all 0.3s;" id="prank-card"
-      onmouseenter="this.style.opacity='1';this.style.borderColor='#cc2222'"
-      onmouseleave="this.style.opacity='0.55';this.style.borderColor='#1a1a1a'"
-      ontouchstart="this.style.opacity='1'"
-    >
-      <div class="card-num" style="color:#1a1a1a;">05</div>
-      <div class="card-title" style="color:#cc2222;letter-spacing:1px;">ДЛЯ УПЕРТИХ В КРАЙ</div>
-      <div class="card-desc" style="color:#2a2a2a;">
-        Не рекомендовано.<br>
-        Стабільність не гарантована.
+
+  <!-- SECTION: РОЗВАГИ -->
+  <div class="menu-section" style="margin-top:16px;">
+    <div class="menu-section-title">Розваги</div>
+    <div class="menu-fun">
+      <div class="menu-card menu-card-sm" onclick="launchMode('chaos','standard')">
+        <div class="card-num" style="font-size:32px;">03</div>
+        <div class="card-title">ХАОС</div>
+        <div class="card-desc">Ячейки переливають.<br>Цифри зникають.</div>
+        <div class="mode-pills" style="margin-top:10px;">
+          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','standard')">STD</button>
+          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','math')">±</button>
+          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','mirror')">⊟</button>
+          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','text')">АБВ</button>
+          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','deform')">~</button>
+        </div>
       </div>
-      <div class="card-tag" style="border-color:#1a1a1a;color:#1a1a1a;">⚠ ЕКСПЕРИМЕНТ</div>
+      <div class="menu-card menu-card-sm" onclick="showTest('prank')" style="border-color:#1a1a1a;opacity:0.55;"
+        onmouseenter="this.style.opacity='1';this.style.borderColor='#cc2222'"
+        onmouseleave="this.style.opacity='0.55';this.style.borderColor='#1a1a1a'"
+        ontouchstart="this.style.opacity='1'">
+        <div class="card-num" style="font-size:32px;color:#1a1a1a;">05</div>
+        <div class="card-title" style="color:#cc2222;">ДЛЯ УПЕРТИХ</div>
+        <div class="card-desc" style="color:#2a2a2a;">Не рекомендовано.</div>
+        <div class="card-tag" style="border-color:#1a1a1a;color:#1a1a1a;">⚠ ЕКСПЕРИМЕНТ</div>
+      </div>
     </div>
   </div>
+
+  <div class="menu-version" style="margin-top:16px;">v2.0 · ТСП «ЩИТ» · 2026</div>
 </div>
 
 <!-- ===== SCREEN: OBSERVATION TABLE ===== -->
@@ -592,6 +628,109 @@ document.getElementById('overlay-logo-chaos').src = LOGO_SRC;
   document.getElementById('overlay-logo-abyss').src = LOGO_SRC;
   document.getElementById('overlay-logo-prank').src = LOGO_SRC;
 
+// ===================== OBS MODE =====================
+let obsMode = 'standard'; // standard | math | mirror | text | deform
+
+// Ukrainian number words
+// Ukrainian with proper apostrophe (using Unicode char \u2019)
+const UA_ONES = ["","один","два","три","чотири","п\u2019ять","шість","сім","вісім","дев\u2019ять"];
+const UA_TEENS = ["десять","одинадцять","дванадцять","тринадцять","чотирнадцять",
+  "п\u2019ятнадцять","шістнадцять","сімнадцять","вісімнадцять","дев\u2019ятнадцять"];
+const UA_TENS = ["","","двадцять","тридцять","сорок","п\u2019ятдесят",
+  "шістдесят","сімдесят","вісімдесят","дев\u2019яносто"];
+
+function numToUa(n) {
+  if(n===100) return 'сто';
+  if(n>=20) return UA_TENS[Math.floor(n/10)]+(n%10?' '+UA_ONES[n%10]:'');
+  if(n>=10) return UA_TEENS[n-10];
+  return UA_ONES[n];
+}
+
+// Arithmetic expressions: seeded per-number per-game
+let arithExprs = {};
+function buildArithExprs(numbers, seed) {
+  arithExprs = {};
+  for(var k=0;k<numbers.length;k++){
+    var n=numbers[k];
+    if(arithExprs[n]) continue;
+    initRng(seed + n*137 + 9999);
+    var expr;
+    // Find all valid operations for n
+    var ops = [];
+    ops.push('add'); // always possible
+    ops.push('sub'); // always possible
+    // multiplication: find factor pairs where both ≤ 12
+    var factors = [];
+    for(var f=2;f<=Math.min(n,12);f++) if(n%f===0 && n/f<=12 && n/f>=2) factors.push(f);
+    if(factors.length>0) ops.push('mul');
+    var op = ops[Math.floor(rng()*ops.length)];
+    if(op==='add'){
+      var maxA = Math.min(n-1, 19);
+      var a = Math.floor(rng()*maxA)+1;
+      expr = a+'+\u200b'+(n-a); // zero-width space for rendering clarity
+    } else if(op==='sub'){
+      var b = Math.floor(rng()*15)+1;
+      expr = (n+b)+'\u2212'+b;
+    } else {
+      var fi = Math.floor(rng()*factors.length);
+      var f2 = factors[fi];
+      expr = f2+'\u00d7'+(n/f2);
+    }
+    arithExprs[n]=expr;
+  }
+}
+
+// Deform: per-cell rotation angle and size multiplier
+let deformData = {};
+function buildDeformData(numbers, seed) {
+  deformData = {};
+  for(var k=0;k<numbers.length;k++){
+    var n=numbers[k];
+    initRng(seed + n*251 + 8888);
+    deformData[n] = {
+      angle: (rng()-0.5)*50,       // -25 to +25 degrees
+      scale: 0.65 + rng()*0.7      // 0.65x to 1.35x size
+    };
+  }
+}
+
+// Get display text for a number given current mode
+function getDisplayText(n) {
+  if(obsMode==='math') return arithExprs[n]||String(n);
+  if(obsMode==='text') return numToUa(n);
+  return String(n);
+}
+
+// Get adjusted font size for mode
+function getModeFs(baseFs) {
+  if(obsMode==='math') return Math.max(7, Math.round(baseFs*0.78));
+  if(obsMode==='text') return Math.max(6, Math.round(baseFs*0.6));
+  if(obsMode==='deform') return baseFs;
+  return baseFs;
+}
+
+// Apply mode transform to SVG text element
+function applyModeTransform(txt, n, cx, cy, fs) {
+  if(obsMode==='mirror'){
+    txt.setAttribute('transform','scale(-1,1) translate('+(-(cx*2))+',0)');
+  } else if(obsMode==='deform' && deformData[n]){
+    var d=deformData[n];
+    var adjFs=Math.round(fs*d.scale);
+    txt.setAttribute('font-size', Math.max(7,adjFs));
+    txt.setAttribute('transform','rotate('+d.angle.toFixed(1)+','+cx.toFixed(1)+','+cy.toFixed(1)+')');
+  }
+}
+
+// launchMode: sets mode and shows test
+function launchMode(testName, mode) {
+  obsMode = mode;
+  // Reset inited flags so test rebuilds with new mode
+  if(testName === 'obs') obsInited = false;
+  if(testName === 'chaos') chaosInited = false;
+  if(testName === 'abyss') abyssInited = false;
+  showTest(testName);
+}
+
 // ===================== NAVIGATION =====================
 function showTest(name) {
   document.getElementById('screen-menu').classList.remove('active');
@@ -619,6 +758,7 @@ function goMenu() {
   // Full reset — no pausing, everything starts fresh next time
 
   // OBS reset
+  obsMode = 'standard';
   clearInterval(timerID); timerID = null;
   next=1; phase='idle'; elapsed=0; wrong=-1; correct=-1; clickTimes=[];
   obsHistory=[];
@@ -759,6 +899,8 @@ function buildObs(seed){
   polys=genLayout(seed); total=Math.min(polys.length,MAX_N); polys=polys.slice(0,total);
   initRng(seed+99); colors=polys.map(()=>PALETTE[Math.floor(rng()*PALETTE.length)]);
   initRng(seed+77); numbers=shuffleNonConsecutive(total,buildAdjacency(polys));
+  buildArithExprs(numbers, seed);
+  buildDeformData(numbers, seed);
   document.getElementById('total-hint').textContent=total; renderObs();
 }
 function renderObs(){
@@ -767,6 +909,7 @@ function renderObs(){
     const isWrong=wrong===i,isCorrect=correct===i;
     const c=centerOf(pts),a=areaOf(pts);
     const fs=MOBILE?(a>5000?18:a>2500?15:a>1200?13:11):(a>12000?20:a>7000?17:a>3500?15:a>1500?13:11);
+    const modeFs=getModeFs(fs);
     const col=colors[i];
     const g=document.createElementNS('http://www.w3.org/2000/svg','g');
     g.style.pointerEvents='none';
@@ -776,11 +919,13 @@ function renderObs(){
     poly.setAttribute('stroke',isCorrect?'#00ff88':isWrong?'#ff4444':'#080c14');
     poly.setAttribute('stroke-width',isCorrect||isWrong?3:1.2);
     const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('x',c.x); txt.setAttribute('y',c.y+fs*0.38);
-    txt.setAttribute('text-anchor','middle'); txt.setAttribute('font-size',fs);
+    txt.setAttribute('x',c.x); txt.setAttribute('y',c.y+modeFs*0.38);
+    txt.setAttribute('text-anchor','middle'); txt.setAttribute('font-size',modeFs);
     txt.setAttribute('font-weight','bold'); txt.setAttribute('font-family','Courier New,monospace');
     txt.setAttribute('fill',isWrong?'#ffcccc':col[1]);
-    txt.style.pointerEvents='none'; txt.textContent=numbers[i];
+    txt.style.pointerEvents='none';
+    txt.textContent=getDisplayText(numbers[i]);
+    applyModeTransform(txt,numbers[i],c.x,c.y+modeFs*0.38,modeFs);
     g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
   });
 }
@@ -1382,6 +1527,8 @@ function buildChaos(seed) {
   chaosHuePhases = chaosPolys.map(function(_, i) { return rng() * 360; });
   initRng(seed + 77);
   chaosNumbers = shuffleNonConsecutive(chaosTotal, buildAdjacency(chaosPolys));
+  buildArithExprs(chaosNumbers, seed);
+  buildDeformData(chaosNumbers, seed);
   document.getElementById('total-hint-chaos').textContent = chaosTotal;
   renderChaos(0);
 }
@@ -1450,15 +1597,17 @@ function renderChaos(t) {
     poly.setAttribute('stroke', isCorrect?'#00ff88':isWrong?'#ff4444':'#080c14');
     poly.setAttribute('stroke-width', isCorrect||isWrong ? 3 : 1.2);
 
+    var chModeFs=getModeFs(fs);
     var txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('x', c.x); txt.setAttribute('y', c.y + fs * 0.38);
+    txt.setAttribute('x', c.x); txt.setAttribute('y', c.y + chModeFs * 0.38);
     txt.setAttribute('text-anchor','middle');
-    txt.setAttribute('font-size', fs);
+    txt.setAttribute('font-size', chModeFs);
     txt.setAttribute('font-weight','bold');
     txt.setAttribute('font-family','Courier New,monospace');
     txt.setAttribute('fill', textColor);
     txt.style.pointerEvents = 'none';
-    txt.textContent = chaosNumbers[i];
+    txt.textContent = getDisplayText(chaosNumbers[i]);
+    applyModeTransform(txt,chaosNumbers[i],c.x,c.y+chModeFs*0.38,chModeFs);
 
     g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
   }
@@ -1645,6 +1794,8 @@ function buildAbyss(seed, keepNext) {
   abyssHuePhases = abyssPolys.map(function() { return rng() * 360; });
   initRng(seed + 77);
   abyssNumbers = shuffleNonConsecutive(abyssTotal, buildAdjacency(abyssPolys));
+  buildArithExprs(abyssNumbers, seed);
+  buildDeformData(abyssNumbers, seed);
   if (!keepNext) {
     abyssNext = 1;
     document.getElementById('total-hint-abyss').textContent = abyssTotal;
@@ -1770,15 +1921,17 @@ function renderAbyss(t) {
     poly.setAttribute('stroke', isCorrect?'#00ff88':isWrong?'#ff4444':'#080c14');
     poly.setAttribute('stroke-width', isCorrect||isWrong ? 3 : 1.2);
 
+    var abModeFs = getModeFs(fs);
     var txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('x', c.x); txt.setAttribute('y', c.y + fs * 0.38);
+    txt.setAttribute('x', c.x); txt.setAttribute('y', c.y + abModeFs * 0.38);
     txt.setAttribute('text-anchor','middle');
-    txt.setAttribute('font-size', fs);
+    txt.setAttribute('font-size', abModeFs);
     txt.setAttribute('font-weight','bold');
     txt.setAttribute('font-family','Courier New,monospace');
     txt.setAttribute('fill', textColor);
     txt.style.pointerEvents = 'none';
-    txt.textContent = abyssNumbers[i];
+    txt.textContent = getDisplayText(abyssNumbers[i]);
+    applyModeTransform(txt, abyssNumbers[i], c.x, c.y+abModeFs*0.38, abModeFs);
 
     g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
   }
