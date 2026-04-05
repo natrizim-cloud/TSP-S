@@ -1967,6 +1967,10 @@ function renderPrank(t) {
 
     var c=centerOf(pts), a=areaOf(pts);
     var fs=MOBILE?(a>5000?18:a>2500?15:a>1200?13:11):(a>12000?20:a>7000?17:a>3500?15:a>1500?13:11);
+
+    // If 4 not yet revealed — skip drawing entirely (sector doesn't exist)
+    if(isMissing && !prankFourVisible) continue;
+
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
     g.style.pointerEvents='none';
 
@@ -2027,10 +2031,10 @@ function renderPrank(t) {
 
 function prankHandleClick(idx) {
   if(prankPhase!=='running') return;
-  // If 4 has appeared and player clicks it — trigger prank, not normal flow
-  if(prankNumbers[idx]===PRANK_NUMBER && prankFourVisible){
-    prankShowMessage();
-    return;
+  // Always ignore clicks on sector 4 — if visible: prank; if not: silently ignore
+  if(prankNumbers[idx]===PRANK_NUMBER){
+    if(prankFourVisible) prankShowMessage();
+    return; // ignore click whether visible or not
   }
   if(prankNumbers[idx]===prankNext){
     prankClickTimes.push(Date.now());
