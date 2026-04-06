@@ -426,7 +426,8 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
             <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','math')">± MATH</button>
             <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','mirror')">⊟ ДЗЕРК</button>
             <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','text')">АБВ ТЕКСТ</button>
-            <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','deform')">~ ХАОС</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','deform')">~ ДЕФОРМ</button>
+            <button class="mode-pill" onclick="event.stopPropagation();launchMode('abyss','chaos')">🌈 ХАОС</button>
           </div>
         </div>
       </div>
@@ -476,27 +477,8 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
   <div class="menu-section" style="margin-top:16px;">
     <div class="menu-section-title">Розваги</div>
     <div class="menu-fun">
-      <div class="menu-card menu-card-sm" onclick="launchMode('chaos','standard')">
-        <div class="card-num" style="font-size:32px;">03</div>
-        <div class="card-title">ХАОС</div>
-        <div class="card-desc">Ячейки переливають.<br>Цифри зникають.</div>
-        <div class="mode-pills" style="margin-top:10px;">
-          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','standard')">STD</button>
-          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','math')">±</button>
-          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','mirror')">⊟</button>
-          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','text')">АБВ</button>
-          <button class="mode-pill" onclick="event.stopPropagation();launchMode('chaos','deform')">~</button>
-        </div>
-      </div>
-      <div class="menu-card menu-card-sm" onclick="showTest('prank')" style="border-color:#1a1a1a;opacity:0.55;"
-        onmouseenter="this.style.opacity='1';this.style.borderColor='#cc2222'"
-        onmouseleave="this.style.opacity='0.55';this.style.borderColor='#1a1a1a'"
-        ontouchstart="this.style.opacity='1'">
-        <div class="card-num" style="font-size:32px;color:#1a1a1a;">05</div>
-        <div class="card-title" style="color:#cc2222;">ДЛЯ УПОРОТИХ</div>
-        <div class="card-desc" style="color:#2a2a2a;">Не рекомендовано.</div>
-        <div class="card-tag" style="border-color:#1a1a1a;color:#1a1a1a;">⚠ ЕКСПЕРИМЕНТ</div>
-      </div>
+
+      <div class="menu-card menu-card-sm" onclick="showTest('prank')" style="display:none;"></div>
     </div>
   </div>
 
@@ -808,7 +790,7 @@ function showTest(name) {
   document.getElementById('back-btn').style.display = 'block';
   document.getElementById('stats').style.display = (name === 'obs' || name === 'chaos' || name === 'abyss' || name === 'prank' || name === 'catch') ? 'flex' : 'none';
   document.getElementById('hdr-sub').textContent =
-    name === 'obs' ? 'ТРЕНАЖЕР СПОСТЕРЕЖЛИВОСТІ · v2.0' :
+    name === 'obs' ? 'СПОСТЕРЕЖЛИВІСТЬ · v2.0' :
     name === 'pilot' ? 'ТЕСТ ПІЛОТА · v2.0' :
     name === 'chaos' ? 'ХАОС · УСКЛАДНЕНА ВЕРСІЯ · v2.0' :
     name === 'abyss' ? 'БЕЗОДНЯ · МАКСИМАЛЬНА СКЛАДНІСТЬ · v2.0' :
@@ -910,6 +892,9 @@ const W = MOBILE ? 400 : 1400, H = MOBILE ? 500 : 700;
 const COLS = MOBILE ? 7 : 14, ROWS = MOBILE ? 8 : 9;
 const MAX_N = MOBILE ? 50 : 100;
 let obsInited = false;
+let obsChaosPhases = [];
+let obsRafID = null;
+function obsRenderLoop(){ obsRafID=requestAnimationFrame(function(){if(obsMode==='chaos'&&phase!=='idle'||phase==='running'||phase==='done'){renderObs();}if(obsMode==='chaos'&&document.getElementById('screen-obs').classList.contains('active')){obsRafID=requestAnimationFrame(arguments.callee);}else{obsRafID=null;}}); }
 let rngState=0;
 function rng(){rngState=(Math.imul(1664525,rngState)+1013904223)|0;return(rngState>>>0)/4294967296;}
 function initRng(s){rngState=s|0;}
@@ -974,7 +959,9 @@ function buildObs(seed){
   initRng(seed+77); numbers=shuffleNonConsecutive(total,buildAdjacency(polys));
   buildArithExprs(numbers, seed);
   buildDeformData(numbers, seed);
-  document.getElementById('total-hint').textContent=total; renderObs();
+  initRng(seed+777); obsChaosPhases=polys.map(()=>rng()*360);
+  document.getElementById('total-hint').textContent=total;
+  if(obsMode==='chaos') obsRenderLoop(); else renderObs();
 }
 function renderObs(){
   const svg=document.getElementById('tbl'); svg.innerHTML='';
@@ -988,14 +975,30 @@ function renderObs(){
     g.style.pointerEvents='none';
     const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
     poly.setAttribute('points',pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' '));
-    poly.setAttribute('fill',isCorrect?'#00cc66':isWrong?'#cc2222':col[0]);
+    // Chaos mode: rainbow cycling colors
+    var bgFill, txtFill;
+    if(obsMode==='chaos' && !isCorrect && !isWrong){
+      var obsT=Date.now()%60000;
+      var obsHue=(obsChaosPhases[i]+(obsT*0.015))%360;
+      var obsBgL=33+16*Math.sin(obsT*0.0014+i*0.65);
+      bgFill='hsl('+obsHue+',82%,'+obsBgL+'%)';
+      var obsBlend=Math.max(0,Math.sin(obsT*0.0009+obsChaosPhases[i]*0.06));
+      obsBlend=obsBlend*obsBlend*obsBlend;
+      var obsContL=obsBgL>42?6:94;
+      var obsTxtL=obsContL+obsBlend*(obsBgL-obsContL);
+      txtFill='hsl('+((obsHue+180)%360)+','+(65-obsBlend*60)+'%,'+obsTxtL+'%)';
+    } else {
+      bgFill=isCorrect?'#00cc66':isWrong?'#cc2222':col[0];
+      txtFill=isWrong?'#ffcccc':col[1];
+    }
+    poly.setAttribute('fill',bgFill);
     poly.setAttribute('stroke',isCorrect?'#00ff88':isWrong?'#ff4444':'#080c14');
     poly.setAttribute('stroke-width',isCorrect||isWrong?3:1.2);
     const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
     txt.setAttribute('x',c.x); txt.setAttribute('y',c.y+modeFs*0.38);
     txt.setAttribute('text-anchor','middle'); txt.setAttribute('font-size',modeFs);
     txt.setAttribute('font-weight','bold'); txt.setAttribute('font-family','Courier New,monospace');
-    txt.setAttribute('fill',isWrong?'#ffcccc':col[1]);
+    txt.setAttribute('fill',txtFill);
     txt.style.pointerEvents='none';
     txt.textContent=getDisplayText(numbers[i]);
     applyModeTransform(txt,numbers[i],c.x,c.y+modeFs*0.38,modeFs);
@@ -1011,7 +1014,7 @@ function handleClick(idx){
     document.getElementById('target').innerHTML='ШУКАЙ: <span>'+next+'</span>';
   } else {wrong=idx;renderObs();setTimeout(()=>{wrong=-1;renderObs();},400);}
 }
-function doStart(){if(phase!=='idle')return;startRun();}
+function doStart(){if(phase!=='idle')return;startRun();if(obsMode==='chaos')obsRenderLoop();}
 function startRun(){
   phase='running'; startTime=Date.now(); clickTimes=[startTime];
   var ol=document.getElementById('start-overlay'); ol.classList.add('hidden'); ol.style.display='none';
@@ -2397,7 +2400,30 @@ function catchLaunch(mode) {
   catchSessionTarget = mode === 'x10' ? 10 : mode === 'x30' ? 30 : 1;
   catchSessionTimes = [];
   catchCurrentRound = 0;
-  showTest('catch');
+  if (!catchInited) {
+    showTest('catch');
+  } else {
+    // Already inited — just reset and show start overlay
+    catchStop();
+    catchPhase = 'idle';
+    document.getElementById('timer').textContent = '00.00с';
+    document.getElementById('timer').className = '';
+    document.getElementById('target').innerHTML = '&nbsp;';
+    document.getElementById('catch-session-info').textContent = '';
+    document.getElementById('catch-round-flash').style.display = 'none';
+    document.getElementById('catch-overlay-title').style.display = 'block';
+    document.getElementById('catch-overlay-title').textContent = 'ЗЛОВИТИ 33';
+    document.getElementById('catch-overlay-body').style.display = 'block';
+    var modeLabel = mode === 'x10' ? 'СЕСІЯ × 10' : mode === 'x30' ? 'СЕСІЯ × 30' : 'ОДИНОЧНА СЕСІЯ';
+    document.getElementById('catch-overlay-body').textContent = modeLabel;
+    document.getElementById('catch-start-btn').style.display = 'block';
+    document.getElementById('catch-results-wrap').style.display = 'none';
+    document.getElementById('catch-countdown-num').style.display = 'none';
+    document.getElementById('catch-overlay').style.display = 'flex';
+    catchBuildSquares();
+    catchLastFrame = 0;
+    catchDraw();
+  }
 }
 
 function initCatch() {
