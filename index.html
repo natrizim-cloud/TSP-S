@@ -473,12 +473,28 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
     </div>
   </div>
 
-  <!-- SECTION: РОЗВАГИ -->
+  <!-- SECTION: МОТОРИКА -->
   <div class="menu-section" style="margin-top:16px;">
-    <div class="menu-section-title">Розваги</div>
+    <div class="menu-section-title">Моторика</div>
     <div class="menu-fun">
-
-      <div class="menu-card menu-card-sm" onclick="showTest('prank')" style="display:none;"></div>
+      <div class="menu-card menu-card-sm" onclick="showTest('motor-sniper')">
+        <div class="card-num" style="font-size:32px;">07</div>
+        <div class="card-title">ЦІЛЬ</div>
+        <div class="card-desc">10 пострілів.<br>Точність + реакція.</div>
+        <div class="card-tag">ТОЧНІСТЬ</div>
+      </div>
+      <div class="menu-card menu-card-sm" onclick="showTest('motor-track')">
+        <div class="card-num" style="font-size:32px;">08</div>
+        <div class="card-title">СУПРОВІД</div>
+        <div class="card-desc">Утримуй курсор<br>на рухомому об'єкті.</div>
+        <div class="card-tag">КООРДИНАЦІЯ</div>
+      </div>
+      <div class="menu-card menu-card-sm" onclick="showTest('motor-line')">
+        <div class="card-num" style="font-size:32px;">09</div>
+        <div class="card-title">ЛІНІЯ</div>
+        <div class="card-desc">Проведи по траєкторії.<br>Пряма / Крива / Коридор / Коло.</div>
+        <div class="card-tag">МОТОРИКА</div>
+      </div>
     </div>
   </div>
 
@@ -635,15 +651,23 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
         font-weight:bold;letter-spacing:3px;color:#00e0ff;margin-bottom:8px;">ЗЛОВИТИ 33</div>
       <div id="catch-overlay-body" style="font-family:'Courier New',monospace;font-size:11px;
         letter-spacing:2px;color:#3a6a8a;text-align:center;line-height:2;"></div>
+      <div id="catch-break-wrap" style="display:none;text-align:center;">
+        <div style="font-family:'Courier New',monospace;font-size:11px;color:#3a6a8a;letter-spacing:2px;margin-bottom:8px;">ПЕРЕРВА</div>
+        <div id="catch-break-num" style="font-family:'Courier New',monospace;font-size:48px;font-weight:bold;color:#00e0ff;line-height:1;"></div>
+        <button id="catch-early-btn" onclick="catchEarlyStart()" style="margin-top:16px;font-size:11px;letter-spacing:2px;">▶ ПОЧАТИ РАНІШЕ</button>
+      </div>
       <div id="catch-countdown-num" style="font-family:'Courier New',monospace;font-size:80px;
         font-weight:bold;color:#00e0ff;display:none;line-height:1;"></div>
       <button id="catch-start-btn" onclick="catchBeginCountdown()"
         style="margin-top:20px;font-size:13px;letter-spacing:3px;display:none;">▶ СТАРТ</button>
-      <div id="catch-results-wrap" style="display:none;text-align:center;width:100%;max-width:360px;">
+      <div id="catch-results-wrap" style="display:none;text-align:center;width:100%;max-width:500px;">
         <div id="catch-results-list" style="font-family:'Courier New',monospace;font-size:10px;
-          color:#4a8aaa;line-height:2;margin-bottom:8px;"></div>
-        <div id="catch-results-avg" style="font-family:'Courier New',monospace;font-size:16px;
-          font-weight:bold;color:#00ffaa;letter-spacing:2px;margin-bottom:16px;"></div>
+          color:#4a8aaa;line-height:1.8;margin-bottom:10px;max-height:160px;overflow-y:auto;"></div>
+        <div id="catch-results-avg" style="font-family:'Courier New',monospace;font-size:14px;
+          font-weight:bold;color:#00ffaa;letter-spacing:2px;margin-bottom:6px;"></div>
+        <div id="catch-results-analysis" style="font-family:'Courier New',monospace;font-size:9px;
+          color:#3a6a8a;line-height:2;margin-bottom:10px;text-align:left;padding:0 8px;"></div>
+        <canvas id="catch-chart" style="width:100%;height:auto;display:block;margin-bottom:14px;border:1px solid #1a3050;border-radius:2px;"></canvas>
         <button onclick="catchLaunch(catchSessionMode)" style="font-size:11px;letter-spacing:2px;">↺ ЗНОВУ</button>
         <button onclick="goMenu()" style="font-size:11px;letter-spacing:2px;margin-left:8px;">← МЕНЮ</button>
       </div>
@@ -664,6 +688,63 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
     <div id="catch-session-info" style="font-family:'Courier New',monospace;font-size:10px;
       color:#2a5a7a;letter-spacing:1px;"></div>
   </div>
+</div>
+
+<!-- ===== SCREEN: MOTOR SNIPER ===== -->
+<div id="screen-motor-sniper" class="screen">
+  <div style="width:100%;max-width:600px;margin:0 auto;position:relative;">
+    <div id="ms-overlay" style="position:absolute;inset:0;z-index:20;background:rgba(9,12,18,0.97);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:3px;backdrop-filter:blur(4px);">
+      <img src="" id="ms-logo" style="width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(200,0,0,0.8));margin-bottom:14px;">
+      <div style="font-family:'Courier New',monospace;font-size:18px;font-weight:bold;letter-spacing:3px;color:#00e0ff;margin-bottom:6px;">ЦІЛЬ</div>
+      <div style="font-family:'Courier New',monospace;font-size:10px;color:#3a6a8a;letter-spacing:2px;margin-bottom:20px;">10 ПОСТРІЛІВ · ТОЧНІСТЬ + РЕАКЦІЯ</div>
+      <button onclick="msStart()" style="font-size:13px;letter-spacing:3px;padding:10px 28px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;">▶ СТАРТ</button>
+    </div>
+    <canvas id="ms-canvas" style="display:block;width:100%;height:auto;background:#0d1520;border:1px solid #1a3050;border-radius:3px;cursor:crosshair;touch-action:none;"></canvas>
+  </div>
+  <div class="controls-bar"><button onclick="msReset()">↺ ЗАНОВО</button></div>
+</div>
+
+<!-- ===== SCREEN: MOTOR TRACK ===== -->
+<div id="screen-motor-track" class="screen">
+  <div style="width:100%;max-width:600px;margin:0 auto;position:relative;">
+    <div id="mt-overlay" style="position:absolute;inset:0;z-index:20;background:rgba(9,12,18,0.97);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:3px;backdrop-filter:blur(4px);">
+      <img src="" id="mt-logo" style="width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(200,0,0,0.8));margin-bottom:14px;">
+      <div style="font-family:'Courier New',monospace;font-size:18px;font-weight:bold;letter-spacing:3px;color:#00e0ff;margin-bottom:6px;">СУПРОВІД</div>
+      <div style="font-family:'Courier New',monospace;font-size:10px;color:#3a6a8a;letter-spacing:2px;margin-bottom:20px;">20 СЕКУНД · УТРИМУЙ КУРСОР НА КОЛІ</div>
+      <button onclick="mtStart()" style="font-size:13px;letter-spacing:3px;padding:10px 28px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;">▶ СТАРТ</button>
+    </div>
+    <canvas id="mt-canvas" style="display:block;width:100%;height:auto;background:#0d1520;border:1px solid #1a3050;border-radius:3px;cursor:crosshair;touch-action:none;"></canvas>
+  </div>
+  <div class="controls-bar"><button onclick="mtReset()">↺ ЗАНОВО</button></div>
+</div>
+
+<!-- ===== SCREEN: MOTOR LINE ===== -->
+<div id="screen-motor-line" class="screen">
+  <div style="width:100%;max-width:600px;margin:0 auto;position:relative;">
+    <div id="ml-overlay" style="position:absolute;inset:0;z-index:20;background:rgba(9,12,18,0.97);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:3px;backdrop-filter:blur(4px);">
+      <img src="" id="ml-logo" style="width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(200,0,0,0.8));margin-bottom:14px;">
+      <div style="font-family:'Courier New',monospace;font-size:18px;font-weight:bold;letter-spacing:3px;color:#00e0ff;margin-bottom:6px;">ЛІНІЯ</div>
+      <div style="font-family:'Courier New',monospace;font-size:10px;color:#3a6a8a;letter-spacing:2px;margin-bottom:16px;">ОБЕРІТЬ РЕЖИМ</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;">
+        <button onclick="mlLaunch('straight')" style="font-size:11px;letter-spacing:2px;padding:8px 16px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;">ПРЯМА</button>
+        <button onclick="mlLaunch('curve')" style="font-size:11px;letter-spacing:2px;padding:8px 16px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;">КРИВА</button>
+        <button onclick="mlLaunch('corridor')" style="font-size:11px;letter-spacing:2px;padding:8px 16px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;">КОРИДОР</button>
+        <button onclick="mlLaunch('circle')" style="font-size:11px;letter-spacing:2px;padding:8px 16px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;">КОЛО</button>
+      </div>
+    </div>
+    <canvas id="ml-canvas" style="display:block;width:100%;height:auto;background:#0d1520;border:1px solid #1a3050;border-radius:3px;cursor:crosshair;touch-action:none;"></canvas>
+  </div>
+  <div class="controls-bar">
+    <button onclick="mlReset()">↺ ЗАНОВО</button>
+    <div id="ml-history" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;"></div>
+  </div>
+  <div id="ml-hint" style="margin-top:6px;font-size:9px;color:#1e3a52;text-align:center;line-height:1.8;">Утримуй кнопку від зеленої точки до червоної</div>
 </div>
 
 <script>
@@ -785,22 +866,31 @@ function showTest(name) {
   document.getElementById('screen-chaos').classList.remove('active');
   document.getElementById('screen-abyss').classList.remove('active');
   document.getElementById('screen-prank').classList.remove('active');
+  document.getElementById('screen-motor-sniper').classList.remove('active');
+  document.getElementById('screen-motor-track').classList.remove('active');
+  document.getElementById('screen-motor-line').classList.remove('active');
   document.getElementById('screen-catch').classList.remove('active');
   document.getElementById('screen-' + name).classList.add('active');
   document.getElementById('back-btn').style.display = 'block';
-  document.getElementById('stats').style.display = (name === 'obs' || name === 'chaos' || name === 'abyss' || name === 'prank' || name === 'catch') ? 'flex' : 'none';
+  document.getElementById('stats').style.display = (name === 'obs' || name === 'chaos' || name === 'abyss' || name === 'prank' || name === 'catch' || name === 'motor-sniper' || name === 'motor-track' || name === 'motor-line') ? 'flex' : 'none';
   document.getElementById('hdr-sub').textContent =
     name === 'obs' ? 'СПОСТЕРЕЖЛИВІСТЬ · v2.0' :
     name === 'pilot' ? 'ТЕСТ ПІЛОТА · v2.0' :
     name === 'chaos' ? 'ХАОС · УСКЛАДНЕНА ВЕРСІЯ · v2.0' :
     name === 'abyss' ? 'БЕЗОДНЯ · МАКСИМАЛЬНА СКЛАДНІСТЬ · v2.0' :
     name === 'prank' ? 'ДЛЯ УПОРОТИХ В КРАЙ · v??' :
+    name === 'motor-sniper' ? 'ЦІЛЬ · ТОЧНІСТЬ · v1.0' :
+    name === 'motor-track' ? 'СУПРОВІД · КООРДИНАЦІЯ · v1.0' :
+    name === 'motor-line' ? 'ЛІНІЯ · МОТОРИКА · v1.0' :
     name === 'catch' ? 'ЗЛОВИТИ 33 · v1.0' : 'ТРЕНУВАЛЬНА ПЛАТФОРМА · v2.0';
   if (name === 'obs') { initObs(); }
   if (name === 'pilot') { initPilot(); }
   if (name === 'chaos') { initChaos(); }
   if (name === 'abyss') { initAbyss(); }
   if (name === 'prank') { initPrank(); }
+  if (name === 'motor-sniper') { initMotorSniper(); }
+  if (name === 'motor-track') { initMotorTrack(); }
+  if (name === 'motor-line') { initMotorLine(); }
   if (name === 'catch') { initCatch(); }
 }
 function goMenu() {
@@ -851,6 +941,9 @@ function goMenu() {
   var abOv=document.getElementById('start-overlay-abyss'); if(abOv){abOv.style.display='';abOv.classList.remove('hidden');}
   abyssInited=false;
 
+  // Motor reset
+  motorSniperStop(); motorTrackStop(); motorLineStop();
+
   // Catch reset
   catchStop();
   catchPhase='idle'; catchInited=false; catchSessionTimes=[];
@@ -872,6 +965,9 @@ function goMenu() {
   document.getElementById('screen-chaos').classList.remove('active');
   document.getElementById('screen-abyss').classList.remove('active');
   document.getElementById('screen-prank').classList.remove('active');
+  document.getElementById('screen-motor-sniper').classList.remove('active');
+  document.getElementById('screen-motor-track').classList.remove('active');
+  document.getElementById('screen-motor-line').classList.remove('active');
   document.getElementById('screen-catch').classList.remove('active');
   document.getElementById('back-btn').style.display = 'none';
   document.getElementById('stats').style.display = 'none';
@@ -2393,6 +2489,7 @@ function catchStop() {
   clearInterval(catchTimerID); catchTimerID = null;
   clearTimeout(catchCountdownTimer); catchCountdownTimer = null;
   clearTimeout(catchScatterTimer); catchScatterTimer = null;
+  clearTimeout(catchBreakTimer); catchBreakTimer = null;
 }
 
 function catchLaunch(mode) {
@@ -2447,9 +2544,13 @@ function initCatch() {
     if (catchPhase !== 'running') return;
     e.preventDefault();
     var p = getCanvasPos(e);
-    for (var i = catchSquares.length - 1; i >= 0; i--) {
+    var PAD = 6; // extra tolerance px
+    // First pass: check if target number is under click (draw order doesn't matter)
+    for (var i = 0; i < catchSquares.length; i++) {
       var s = catchSquares[i];
-      if (p.x >= s.x && p.x <= s.x + catchSZ && p.y >= s.y && p.y <= s.y + catchSZ) {
+      if (s.found) continue;
+      if (p.x >= s.x - PAD && p.x <= s.x + catchSZ + PAD &&
+          p.y >= s.y - PAD && p.y <= s.y + catchSZ + PAD) {
         if (s.num === catchNext) {
           s.found = true;
           catchNext++;
@@ -2458,15 +2559,19 @@ function initCatch() {
           } else {
             document.getElementById('target').innerHTML = 'ШУКАЙ: <span>' + catchNext + '</span>';
           }
+          return;
         }
-        return;
       }
     }
+    // Second pass: register wrong click (do nothing - just don't block)
   }
   catchCanvas.addEventListener('mousedown', onCatchClick);
   catchCanvas.addEventListener('touchstart', onCatchClick, { passive: false });
 
   document.getElementById('catch-logo').src = document.getElementById('hdr-logo').src;
+  document.getElementById('ms-logo').src = LOGO_SRC;
+  document.getElementById('mt-logo').src = LOGO_SRC;
+  document.getElementById('ml-logo').src = LOGO_SRC;
   catchShowStart();
 }
 
@@ -2622,21 +2727,36 @@ function catchDraw() {
   }
 
   var fs = Math.round(catchSZ * 0.38);
+  var targetSq = null;
   for (var i = 0; i < catchSquares.length; i++) {
     var s = catchSquares[i];
     if (s.found) continue;
+    // Save target for last (drawn on top)
+    if (s.num === catchNext && catchPhase === 'running') { targetSq = s; continue; }
 
     ctx.fillStyle = '#0d1a2a';
     ctx.fillRect(s.x, s.y, catchSZ, catchSZ);
     ctx.strokeStyle = '#1a4a6a';
     ctx.lineWidth = 1;
     ctx.strokeRect(s.x, s.y, catchSZ, catchSZ);
-
     ctx.fillStyle = '#5a9aaa';
     ctx.font = 'bold ' + fs + 'px Courier New';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(s.num, s.x + catchSZ/2, s.y + catchSZ/2);
+  }
+  // Draw target square last — always on top
+  if (targetSq) {
+    ctx.fillStyle = '#0d1a2a';
+    ctx.fillRect(targetSq.x, targetSq.y, catchSZ, catchSZ);
+    ctx.strokeStyle = '#1a4a6a';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(targetSq.x, targetSq.y, catchSZ, catchSZ);
+    ctx.fillStyle = '#5a9aaa';
+    ctx.font = 'bold ' + fs + 'px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(targetSq.num, targetSq.x + catchSZ/2, targetSq.y + catchSZ/2);
   }
 }
 
@@ -2661,51 +2781,202 @@ function catchEndRound() {
   if (catchCurrentRound >= catchSessionTarget) {
     setTimeout(catchShowResults, 1000);
   } else {
-    // Next round after 1.5s
+    // Show break screen after 1s
     setTimeout(function() {
       catchBuildSquares();
-      catchLastFrame = 0;
-      catchPhase = 'countdown';
-      catchCountdownVal = 3;
       document.getElementById('catch-overlay-title').style.display = 'block';
       document.getElementById('catch-overlay-title').textContent = 'РАУНД ' + (catchCurrentRound + 1);
       document.getElementById('catch-overlay-body').style.display = 'block';
       document.getElementById('catch-overlay-body').textContent =
         'Кращий: ' + fmt(Math.min.apply(null, catchSessionTimes));
+      document.getElementById('catch-break-wrap').style.display = 'block';
+      document.getElementById('catch-countdown-num').style.display = 'none';
+      document.getElementById('catch-start-btn').style.display = 'none';
       document.getElementById('catch-overlay').style.display = 'flex';
       document.getElementById('timer').className = '';
       document.getElementById('timer').textContent = '00.00с';
       document.getElementById('target').innerHTML = '&nbsp;';
-      catchTickCountdown();
-    }, 1500);
+      catchBreakCountdown(30);
+    }, 1000);
   }
+}
+
+let catchBreakTimer = null;
+let catchBreakVal = 30;
+
+function catchBreakCountdown(sec) {
+  catchBreakVal = sec;
+  catchPhase = 'break';
+  var el = document.getElementById('catch-break-num');
+  el.textContent = catchBreakVal;
+  if (catchBreakVal <= 0) {
+    catchStartNextRound();
+    return;
+  }
+  catchBreakTimer = setTimeout(function() {
+    catchBreakVal--;
+    catchBreakCountdown(catchBreakVal);
+  }, 1000);
+}
+
+function catchEarlyStart() {
+  clearTimeout(catchBreakTimer);
+  catchStartNextRound();
+}
+
+function catchStartNextRound() {
+  document.getElementById('catch-break-wrap').style.display = 'none';
+  catchLastFrame = 0;
+  catchPhase = 'countdown';
+  catchCountdownVal = 3;
+  catchTickCountdown();
 }
 
 function catchShowResults() {
   catchPhase = 'done';
-  var total = catchSessionTimes.length;
-  var avg = catchSessionTimes.reduce(function(a,b){return a+b;},0) / total;
-  var best = Math.min.apply(null, catchSessionTimes);
-  var worst = Math.max.apply(null, catchSessionTimes);
+  var times = catchSessionTimes;
+  var n = times.length;
+  var avg = times.reduce(function(a,b){return a+b;},0) / n;
+  var best = Math.min.apply(null, times);
+  var worst = Math.max.apply(null, times);
 
-  var listHTML = catchSessionTimes.map(function(t,i){
+  // === ANALYSIS ===
+  var analysis = [];
+
+  // Trend: compare first half vs second half
+  if (n >= 4) {
+    var half = Math.floor(n/2);
+    var avgFirst = times.slice(0,half).reduce(function(a,b){return a+b;},0)/half;
+    var avgSecond = times.slice(n-half).reduce(function(a,b){return a+b;},0)/half;
+    var trendPct = Math.round((avgFirst - avgSecond) / avgFirst * 100);
+    if (trendPct > 5) {
+      analysis.push('↑ ТРЕНД: покращення на ' + trendPct + '% у другій половині');
+    } else if (trendPct < -5) {
+      analysis.push('↓ ТРЕНД: ознаки втоми, сповільнення на ' + Math.abs(trendPct) + '%');
+    } else {
+      analysis.push('→ ТРЕНД: стабільний результат по сесії');
+    }
+  }
+
+  // Consistency: std deviation / avg
+  if (n >= 3) {
+    var variance = times.reduce(function(s,t){return s + Math.pow(t-avg,2);},0) / n;
+    var stdDev = Math.sqrt(variance);
+    var cv = Math.round(stdDev / avg * 100);
+    if (cv <= 8) analysis.push('◎ СТАБІЛЬНІСТЬ: висока (CV=' + cv + '%)');
+    else if (cv <= 18) analysis.push('◎ СТАБІЛЬНІСТЬ: середня (CV=' + cv + '%)');
+    else analysis.push('◎ СТАБІЛЬНІСТЬ: низька (CV=' + cv + '%) — нерівна гра');
+  }
+
+  // Peak performance: rounds within 10% of best
+  var peakCount = times.filter(function(t){return t <= best*1.10;}).length;
+  if (peakCount > 1) analysis.push('★ ПІКОВИХ РАУНДІВ: ' + peakCount + ' з ' + n + ' (±10% від кращого)');
+
+  // Best-worst spread
+  var spread = Math.round((worst - best) / best * 100);
+  analysis.push('⇕ РОЗКИД: ' + fmt(best) + ' — ' + fmt(worst) + ' (' + spread + '%)');
+
+  // === LIST ===
+  var listHTML = times.map(function(t,i){
     var mark = t===best ? ' ★' : t===worst ? ' ▼' : '';
-    return '<div>#'+(i+1)+' — '+fmt(t)+mark+'</div>';
+    var bar = '';
+    return '<div style="display:flex;justify-content:space-between;gap:12px;">' +
+      '<span style="color:#2a5a7a;">#'+(i+1)+'</span>' +
+      '<span style="color:'+(t===best?'#00ffaa':t===worst?'#ff6666':'#4a8aaa')+'">' +
+      fmt(t)+mark+'</span></div>';
   }).join('');
 
   document.getElementById('catch-results-list').innerHTML = listHTML;
-  document.getElementById('catch-results-avg').textContent =
-    'СЕРЕДНЄ: ' + fmt(Math.round(avg));
-  document.getElementById('catch-countdown-num').style.display = 'none';
-  document.getElementById('catch-overlay-title').style.display = 'block';
-  document.getElementById('catch-overlay-title').textContent = 'СЕСІЯ ЗАВЕРШЕНА';
-  document.getElementById('catch-overlay-body').style.display = 'none';
-  document.getElementById('catch-results-wrap').style.display = 'block';
-  document.getElementById('catch-overlay').style.display = 'flex';
+  document.getElementById('catch-results-avg').textContent = 'СЕРЕДНЄ: ' + fmt(Math.round(avg));
+  document.getElementById('catch-results-analysis').innerHTML =
+    analysis.map(function(a){return '<div>'+a+'</div>';}).join('');
 
-  document.getElementById('catch-session-info').textContent = '';
-  document.getElementById('timer').className = 'done';
-  document.getElementById('target').textContent = '✓ ЗАВЕРШЕНО';
+  // === CHART ===
+  var chartEl = document.getElementById('catch-chart');
+  var CW = 460, CH = 180;
+  chartEl.width = CW; chartEl.height = CH;
+  var ctx2 = chartEl.getContext('2d');
+  var PAD = {top:24, right:16, bottom:32, left:52};
+  var gW = CW-PAD.left-PAD.right, gH = CH-PAD.top-PAD.bottom;
+  var maxV = worst * 1.05;
+
+  ctx2.fillStyle = '#090c12';
+  ctx2.fillRect(0,0,CW,CH);
+
+  // Grid
+  ctx2.strokeStyle = '#1a3050'; ctx2.lineWidth = 1;
+  for (var gi=0;gi<=4;gi++) {
+    var gy2 = PAD.top + gH - gi/4*gH;
+    ctx2.beginPath(); ctx2.moveTo(PAD.left,gy2); ctx2.lineTo(PAD.left+gW,gy2); ctx2.stroke();
+    ctx2.fillStyle='#3a6a8a'; ctx2.font='8px Courier New'; ctx2.textAlign='right';
+    ctx2.fillText(fmt(Math.round(maxV*gi/4)), PAD.left-4, gy2+3);
+  }
+
+  // Average line
+  var avgY2 = PAD.top + gH - (avg/maxV)*gH;
+  ctx2.strokeStyle='#2a6a4a'; ctx2.lineWidth=1; ctx2.setLineDash([4,4]);
+  ctx2.beginPath(); ctx2.moveTo(PAD.left,avgY2); ctx2.lineTo(PAD.left+gW,avgY2); ctx2.stroke();
+  ctx2.setLineDash([]);
+  ctx2.fillStyle='#2a8a5a'; ctx2.font='8px Courier New'; ctx2.textAlign='left';
+  ctx2.fillText('сер. '+fmt(Math.round(avg)), PAD.left+4, avgY2-3);
+
+  // Area + line
+  ctx2.beginPath(); ctx2.moveTo(PAD.left, PAD.top+gH);
+  for (var pi=0;pi<n;pi++) {
+    var px2 = PAD.left + (pi/(n>1?n-1:1))*gW;
+    var py2 = PAD.top + gH - (times[pi]/maxV)*gH;
+    ctx2.lineTo(px2, py2);
+  }
+  ctx2.lineTo(PAD.left+gW*(n>1?1:0), PAD.top+gH); ctx2.closePath();
+  var grad2 = ctx2.createLinearGradient(0,PAD.top,0,PAD.top+gH);
+  grad2.addColorStop(0,'rgba(0,220,255,0.2)'); grad2.addColorStop(1,'rgba(0,80,120,0.03)');
+  ctx2.fillStyle=grad2; ctx2.fill();
+
+  ctx2.strokeStyle='#00c8f0'; ctx2.lineWidth=1.5; ctx2.beginPath();
+  for (var li=0;li<n;li++) {
+    var lx2=PAD.left+(li/(n>1?n-1:1))*gW, ly2=PAD.top+gH-(times[li]/maxV)*gH;
+    li===0?ctx2.moveTo(lx2,ly2):ctx2.lineTo(lx2,ly2);
+  }
+  ctx2.stroke();
+
+  // Dots: best=green, worst=red, others=blue
+  for (var di=0;di<n;di++) {
+    var dx2=PAD.left+(di/(n>1?n-1:1))*gW, dy2=PAD.top+gH-(times[di]/maxV)*gH;
+    ctx2.beginPath(); ctx2.arc(dx2,dy2,4,0,Math.PI*2);
+    ctx2.fillStyle = times[di]===best?'#00ffaa':times[di]===worst?'#ff4444':'#00a0cc';
+    ctx2.fill();
+    // Round number below
+    ctx2.fillStyle='#2a5a7a'; ctx2.font='8px Courier New'; ctx2.textAlign='center';
+    ctx2.fillText(di+1, dx2, PAD.top+gH+12);
+  }
+
+  // Trend line
+  if (n >= 3) {
+    var sumX=0,sumY=0,sumXY=0,sumX2=0;
+    for(var ti=0;ti<n;ti++){sumX+=ti;sumY+=times[ti];sumXY+=ti*times[ti];sumX2+=ti*ti;}
+    var slope=(n*sumXY-sumX*sumY)/(n*sumX2-sumX*sumX);
+    var intercept=(sumY-slope*sumX)/n;
+    var ty0=PAD.top+gH-(intercept/maxV)*gH;
+    var ty1=PAD.top+gH-((intercept+slope*(n-1))/maxV)*gH;
+    ctx2.strokeStyle='rgba(255,160,0,0.5)'; ctx2.lineWidth=1; ctx2.setLineDash([3,3]);
+    ctx2.beginPath(); ctx2.moveTo(PAD.left,ty0); ctx2.lineTo(PAD.left+gW,ty1); ctx2.stroke();
+    ctx2.setLineDash([]);
+  }
+
+  ctx2.fillStyle='#4a8aaa'; ctx2.font='9px Courier New'; ctx2.textAlign='center';
+  ctx2.fillText('РЕЗУЛЬТАТИ ПО РАУНДАХ (помаранчева — тренд)', CW/2, PAD.top-8);
+
+  // Show overlay
+  document.getElementById('catch-break-wrap').style.display='none';
+  document.getElementById('catch-countdown-num').style.display='none';
+  document.getElementById('catch-overlay-title').style.display='block';
+  document.getElementById('catch-overlay-title').textContent='СЕСІЯ ЗАВЕРШЕНА';
+  document.getElementById('catch-overlay-body').style.display='none';
+  document.getElementById('catch-results-wrap').style.display='block';
+  document.getElementById('catch-overlay').style.display='flex';
+  document.getElementById('catch-session-info').textContent='';
+  document.getElementById('timer').className='done';
+  document.getElementById('target').textContent='✓ ЗАВЕРШЕНО';
 }
 
 function catchReset() {
@@ -2727,6 +2998,364 @@ function catchReset() {
   document.getElementById('catch-overlay').style.display = 'flex';
   catchBuildSquares();
   if (catchCtx) catchDraw();
+}
+
+// ===================== MOTOR SNIPER =====================
+var msCanvas, msCtx, msCW, msCH;
+var msRunning=false, msShots=0, msMax=10, msErrs=[], msTms=[], msTgt=null, msT0=0, msDone=false;
+var msInited=false;
+
+function motorSniperStop(){ msRunning=false; }
+
+function initMotorSniper(){
+  if(msInited) return; msInited=true;
+  msCanvas=document.getElementById('ms-canvas');
+  msCW=Math.min(600,window.innerWidth-32); msCH=Math.round(msCW*0.55);
+  msCanvas.width=msCW; msCanvas.height=msCH;
+  msCtx=msCanvas.getContext('2d');
+  msCanvas.addEventListener('click', msClick);
+  msCanvas.addEventListener('touchend', function(e){e.preventDefault();var r=msCanvas.getBoundingClientRect();var t=e.changedTouches[0];var sx=msCW/r.width;msClickAt((t.clientX-r.left)*sx,(t.clientY-r.top)*sx);},{passive:false});
+  msDraw();
+  document.getElementById('ms-overlay').style.display='flex';
+}
+
+function msStart(){
+  document.getElementById('ms-overlay').style.display='none';
+  msRunning=true;msShots=0;msErrs=[];msTms=[];msDone=false;
+  document.getElementById('timer').className='running';
+  msNext();
+}
+function msReset(){
+  msRunning=false;msDone=false;msShots=0;msErrs=[];msTms=[];msTgt=null;
+  document.getElementById('timer').textContent='00.00с';
+  document.getElementById('timer').className='';
+  document.getElementById('target').innerHTML='&nbsp;';
+  document.getElementById('ms-overlay').style.display='flex';
+  if(msCtx) msDraw();
+}
+function msNext(){
+  if(msShots>=msMax){msFinish();return;}
+  msTgt={x:50+Math.random()*(msCW-100),y:40+Math.random()*(msCH-80)};
+  msT0=Date.now();
+  document.getElementById('target').innerHTML='ПОСТРІЛ <span>'+(msShots+1)+'/'+msMax+'</span>';
+  msDraw();
+}
+function msClick(e){
+  var r=msCanvas.getBoundingClientRect();var sx=msCW/r.width;
+  msClickAt((e.clientX-r.left)*sx,(e.clientY-r.top)*sx);
+}
+function msClickAt(x,y){
+  if(!msRunning||!msTgt||msDone) return;
+  var err=Math.round(Math.sqrt(Math.pow(x-msTgt.x,2)+Math.pow(y-msTgt.y,2)));
+  msErrs.push(err); msTms.push(Date.now()-msT0); msShots++;
+  msDraw();
+  setTimeout(msNext,250);
+}
+function msFinish(){
+  msRunning=false;msDone=true;msTgt=null;
+  var avgE=Math.round(msErrs.reduce(function(a,b){return a+b;},0)/msErrs.length);
+  var avgT=Math.round(msTms.reduce(function(a,b){return a+b;},0)/msTms.length);
+  document.getElementById('timer').textContent=avgT+'мс';
+  document.getElementById('timer').className='done';
+  document.getElementById('target').innerHTML='Відхилення: <span>'+avgE+'px</span>';
+  msDrawChart();
+}
+function msDraw(){
+  msCtx.fillStyle='#0d1520'; msCtx.fillRect(0,0,msCW,msCH);
+  if(msDone){msDrawChart();return;}
+  if(!msTgt) return;
+  [[44,'#0d2838'],[30,'#1a4a6a'],[16,'#2a6a8a']].forEach(function(rc){
+    msCtx.beginPath();msCtx.arc(msTgt.x,msTgt.y,rc[0],0,Math.PI*2);
+    msCtx.fillStyle=rc[1];msCtx.fill();
+    msCtx.strokeStyle='#1a5a7a';msCtx.lineWidth=0.5;msCtx.stroke();
+  });
+  msCtx.beginPath();msCtx.arc(msTgt.x,msTgt.y,4,0,Math.PI*2);
+  msCtx.fillStyle='#00e0ff';msCtx.fill();
+  msCtx.strokeStyle='#003050';msCtx.lineWidth=1;
+  msCtx.beginPath();msCtx.moveTo(msTgt.x-50,msTgt.y);msCtx.lineTo(msTgt.x+50,msTgt.y);msCtx.stroke();
+  msCtx.beginPath();msCtx.moveTo(msTgt.x,msTgt.y-50);msCtx.lineTo(msTgt.x,msTgt.y+50);msCtx.stroke();
+}
+function msDrawChart(){
+  if(!msErrs.length) return;
+  var PAD={t:26,r:14,b:34,l:50};
+  var gW=msCW-PAD.l-PAD.r, gH=msCH-PAD.t-PAD.b;
+  var best=Math.min.apply(null,msErrs),worst=Math.max.apply(null,msErrs);
+  var maxE=worst*1.1||1;
+  msCtx.fillStyle='#0d1520';msCtx.fillRect(0,0,msCW,msCH);
+  msCtx.strokeStyle='#1a3050';msCtx.lineWidth=0.5;
+  for(var g=0;g<=4;g++){
+    var gy=PAD.t+gH-g/4*gH;
+    msCtx.beginPath();msCtx.moveTo(PAD.l,gy);msCtx.lineTo(PAD.l+gW,gy);msCtx.stroke();
+    msCtx.fillStyle='#3a6a8a';msCtx.font='9px Courier New';msCtx.textAlign='right';
+    msCtx.fillText(Math.round(maxE*g/4)+'px',PAD.l-4,gy+3);
+  }
+  var avgE=msErrs.reduce(function(a,b){return a+b;},0)/msErrs.length;
+  var ayY=PAD.t+gH-(avgE/maxE)*gH;
+  msCtx.strokeStyle='#2a6a4a';msCtx.lineWidth=1;msCtx.setLineDash([4,4]);
+  msCtx.beginPath();msCtx.moveTo(PAD.l,ayY);msCtx.lineTo(PAD.l+gW,ayY);msCtx.stroke();
+  msCtx.setLineDash([]);
+  msCtx.fillStyle='#2a8a5a';msCtx.font='8px Courier New';msCtx.textAlign='left';
+  msCtx.fillText('сер.'+Math.round(avgE)+'px',PAD.l+4,ayY-3);
+  msErrs.forEach(function(e,i){
+    var x=PAD.l+(i/(msMax-1))*gW,y=PAD.t+gH-(e/maxE)*gH;
+    if(i>0){var px=PAD.l+((i-1)/(msMax-1))*gW,py=PAD.t+gH-(msErrs[i-1]/maxE)*gH;
+      msCtx.strokeStyle='#2a4a6a';msCtx.lineWidth=1.5;
+      msCtx.beginPath();msCtx.moveTo(px,py);msCtx.lineTo(x,y);msCtx.stroke();}
+    msCtx.beginPath();msCtx.arc(x,y,5,0,Math.PI*2);
+    msCtx.fillStyle=e===best?'#00ffaa':e===worst?'#ff4444':'#00c8f0';msCtx.fill();
+    msCtx.fillStyle='#3a6a8a';msCtx.font='9px Courier New';msCtx.textAlign='center';
+    msCtx.fillText(i+1,x,PAD.t+gH+14);
+    msCtx.fillText(e,x,y-9);
+  });
+  var avgT=Math.round(msTms.reduce(function(a,b){return a+b;},0)/msTms.length);
+  msCtx.fillStyle='#4a8aaa';msCtx.font='10px Courier New';msCtx.textAlign='center';
+  msCtx.fillText('ВІДХИЛЕННЯ ПО ПОСТРІЛАХ (px) · Час реакції: '+avgT+'мс',msCW/2,PAD.t-8);
+}
+
+// ===================== MOTOR TRACK =====================
+var mtCanvas, mtCtx, mtCW, mtCH;
+var mtRunning=false,mtRaf=null,mtHit=0,mtFrames=0;
+var mtObj={x:150,y:100,r:32,dx:2.2,dy:1.6};
+var mtMx=-999,mtMy=-999,mtDuration=20000,mtT0=0;
+var mtInited=false;
+
+function motorTrackStop(){ cancelAnimationFrame(mtRaf);mtRunning=false; }
+
+function initMotorTrack(){
+  if(mtInited) return; mtInited=true;
+  mtCanvas=document.getElementById('mt-canvas');
+  mtCW=Math.min(600,window.innerWidth-32); mtCH=Math.round(mtCW*0.55);
+  mtCanvas.width=mtCW; mtCanvas.height=mtCH;
+  mtCtx=mtCanvas.getContext('2d');
+  function getPos(e){
+    var r=mtCanvas.getBoundingClientRect(),sx=mtCW/r.width;
+    var src=e.touches?e.touches[0]:e;
+    return{x:(src.clientX-r.left)*sx,y:(src.clientY-r.top)*sx};
+  }
+  mtCanvas.addEventListener('mousemove',function(e){var p=getPos(e);mtMx=p.x;mtMy=p.y;if(!mtRunning)mtDraw();});
+  mtCanvas.addEventListener('touchmove',function(e){e.preventDefault();var p=getPos(e);mtMx=p.x;mtMy=p.y;},{passive:false});
+  mtDraw();
+  document.getElementById('mt-overlay').style.display='flex';
+}
+function mtStart(){
+  document.getElementById('mt-overlay').style.display='none';
+  mtRunning=true;mtHit=0;mtFrames=0;
+  mtObj={x:mtCW/2,y:mtCH/2,r:32,dx:2.2,dy:1.6};
+  mtT0=Date.now();
+  document.getElementById('timer').className='running';
+  document.getElementById('target').innerHTML='УТРИМУЙ КУРСОР НА КОЛІ';
+  requestAnimationFrame(mtLoop);
+}
+function mtLoop(){
+  if(!mtRunning) return;
+  mtObj.x+=mtObj.dx; mtObj.y+=mtObj.dy;
+  if(mtObj.x<mtObj.r){mtObj.x=mtObj.r;mtObj.dx=Math.abs(mtObj.dx)+(Math.random()-0.5)*0.3;}
+  if(mtObj.x>mtCW-mtObj.r){mtObj.x=mtCW-mtObj.r;mtObj.dx=-Math.abs(mtObj.dx)+(Math.random()-0.5)*0.3;}
+  if(mtObj.y<mtObj.r){mtObj.y=mtObj.r;mtObj.dy=Math.abs(mtObj.dy)+(Math.random()-0.5)*0.3;}
+  if(mtObj.y>mtCH-mtObj.r){mtObj.y=mtCH-mtObj.r;mtObj.dy=-Math.abs(mtObj.dy)+(Math.random()-0.5)*0.3;}
+  if(Math.random()<0.008){mtObj.dx+=(Math.random()-0.5)*1.8;mtObj.dy+=(Math.random()-0.5)*1.8;}
+  var spd=Math.sqrt(mtObj.dx*mtObj.dx+mtObj.dy*mtObj.dy);
+  if(spd>5){mtObj.dx=mtObj.dx/spd*5;mtObj.dy=mtObj.dy/spd*5;}
+  if(spd<1.5){mtObj.dx*=1.3;mtObj.dy*=1.3;}
+  var inside=Math.sqrt(Math.pow(mtMx-mtObj.x,2)+Math.pow(mtMy-mtObj.y,2))<mtObj.r;
+  mtFrames++;if(inside)mtHit++;
+  var el=Date.now()-mtT0;
+  document.getElementById('timer').textContent=fmt(el);
+  mtDraw(el);
+  if(el>=mtDuration){mtFinish();return;}
+  mtRaf=requestAnimationFrame(mtLoop);
+}
+function mtDraw(el){
+  mtCtx.fillStyle='#0d1520';mtCtx.fillRect(0,0,mtCW,mtCH);
+  // Grid
+  mtCtx.strokeStyle='rgba(20,60,100,0.2)';mtCtx.lineWidth=1;
+  for(var gx=60;gx<mtCW;gx+=60){mtCtx.beginPath();mtCtx.moveTo(gx,0);mtCtx.lineTo(gx,mtCH);mtCtx.stroke();}
+  for(var gy=60;gy<mtCH;gy+=60){mtCtx.beginPath();mtCtx.moveTo(0,gy);mtCtx.lineTo(mtCW,gy);mtCtx.stroke();}
+  // Target circle
+  var inside=Math.sqrt(Math.pow(mtMx-mtObj.x,2)+Math.pow(mtMy-mtObj.y,2))<mtObj.r;
+  mtCtx.beginPath();mtCtx.arc(mtObj.x,mtObj.y,mtObj.r,0,Math.PI*2);
+  mtCtx.fillStyle=inside?'#0a2a1a':'#1a0a0a';mtCtx.fill();
+  mtCtx.strokeStyle=inside?'#00c870':'#cc3322';mtCtx.lineWidth=2;mtCtx.stroke();
+  mtCtx.beginPath();mtCtx.arc(mtObj.x,mtObj.y,mtObj.r-10,0,Math.PI*2);
+  mtCtx.strokeStyle=inside?'#00884a':'#881a10';mtCtx.lineWidth=1;mtCtx.stroke();
+  // Cursor
+  if(mtMx>0&&mtMx<mtCW&&mtMy>0&&mtMy<mtCH){
+    mtCtx.beginPath();mtCtx.arc(mtMx,mtMy,5,0,Math.PI*2);
+    mtCtx.fillStyle='#00e0ff';mtCtx.fill();
+  }
+  // Progress bar
+  if(el!==undefined){
+    mtCtx.fillStyle='#003050';mtCtx.fillRect(0,mtCH-4,mtCW,4);
+    mtCtx.fillStyle='#00c8f0';mtCtx.fillRect(0,mtCH-4,Math.min(1,el/mtDuration)*mtCW,4);
+    var acc=mtFrames>0?Math.round(mtHit/mtFrames*100):0;
+    mtCtx.fillStyle='#3a6a8a';mtCtx.font='10px Courier New';mtCtx.textAlign='left';
+    mtCtx.fillText('Утримання: '+acc+'%',8,16);
+  }
+}
+function mtFinish(){
+  mtRunning=false;
+  var acc=mtFrames>0?Math.round(mtHit/mtFrames*100):0;
+  var grade=acc>=80?'відмінно':acc>=60?'добре':acc>=40?'задовільно':'низький';
+  document.getElementById('timer').className='done';
+  document.getElementById('target').innerHTML='Утримання: <span>'+acc+'%</span> — '+grade;
+  mtDraw(mtDuration);
+}
+function mtReset(){
+  motorTrackStop();mtMx=-999;mtMy=-999;mtHit=0;mtFrames=0;
+  document.getElementById('timer').textContent='00.00с';
+  document.getElementById('timer').className='';
+  document.getElementById('target').innerHTML='&nbsp;';
+  document.getElementById('mt-overlay').style.display='flex';
+  if(mtCtx)mtDraw();
+}
+
+// ===================== MOTOR LINE =====================
+var mlCanvas, mlCtx, mlCW, mlCH;
+var mlInited=false,mlDrawing=false,mlPath=[],mlIdeal=[];
+var mlMode='straight',mlDone=false,mlT0=0;
+var mlHistory=[],mlTimes=[];
+
+function motorLineStop(){ mlDrawing=false; }
+
+function initMotorLine(){
+  if(mlInited) return; mlInited=true;
+  mlCanvas=document.getElementById('ml-canvas');
+  mlCW=Math.min(600,window.innerWidth-32); mlCH=Math.round(mlCW*0.5);
+  mlCanvas.width=mlCW; mlCanvas.height=mlCH;
+  mlCtx=mlCanvas.getContext('2d');
+  function getPos(e){
+    var r=mlCanvas.getBoundingClientRect(),sx=mlCW/r.width;
+    var src=e.touches?e.touches[0]:e.changedTouches?e.changedTouches[0]:e;
+    return{x:(src.clientX-r.left)*sx,y:(src.clientY-r.top)*sx};
+  }
+  mlCanvas.addEventListener('mousedown',function(e){var p=getPos(e);mlDown(p.x,p.y);});
+  mlCanvas.addEventListener('mousemove',function(e){var p=getPos(e);mlMove(p.x,p.y);});
+  mlCanvas.addEventListener('mouseup',function(e){mlUp();});
+  mlCanvas.addEventListener('touchstart',function(e){e.preventDefault();var p=getPos(e);mlDown(p.x,p.y);},{passive:false});
+  mlCanvas.addEventListener('touchmove',function(e){e.preventDefault();var p=getPos(e);mlMove(p.x,p.y);},{passive:false});
+  mlCanvas.addEventListener('touchend',function(e){e.preventDefault();mlUp();},{passive:false});
+  mlDraw();
+  document.getElementById('ml-overlay').style.display='flex';
+}
+function mlLaunch(mode){
+  mlMode=mode; mlHistory=[]; mlTimes=[];
+  document.getElementById('ml-overlay').style.display='none';
+  document.getElementById('ml-history').innerHTML='';
+  document.getElementById('ml-hint').textContent='Утримуй кнопку від зеленої точки до червоної';
+  document.getElementById('timer').className='';
+  document.getElementById('timer').textContent='00.00с';
+  document.getElementById('target').innerHTML='&nbsp;';
+  mlBuildIdeal();mlPath=[];mlDone=false;mlDraw();
+}
+function mlReset(){
+  mlPath=[];mlDone=false;mlDrawing=false;
+  if(mlIdeal.length)mlDraw();
+  else document.getElementById('ml-overlay').style.display='flex';
+}
+function mlBuildIdeal(){
+  mlIdeal=[];
+  var A,B;
+  if(mlMode==='straight'){
+    A={x:40,y:60+Math.random()*(mlCH-120)};
+    B={x:mlCW-40,y:60+Math.random()*(mlCH-120)};
+    for(var i=0;i<=80;i++){var t=i/80;mlIdeal.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}
+  } else if(mlMode==='curve'){
+    A={x:40,y:mlCH/2};B={x:mlCW-40,y:mlCH/2};
+    var cx=mlCW/2,cy=30+Math.random()*(mlCH-60);
+    for(var i=0;i<=80;i++){var t=i/80;
+      mlIdeal.push({x:(1-t)*(1-t)*A.x+2*(1-t)*t*cx+t*t*B.x,y:(1-t)*(1-t)*A.y+2*(1-t)*t*cy+t*t*B.y});}
+  } else if(mlMode==='corridor'){
+    A={x:40,y:mlCH/2};B={x:mlCW-40,y:mlCH/2};
+    var pts=[A];
+    for(var s=1;s<=4;s++) pts.push({x:A.x+s/5*(B.x-A.x),y:40+Math.random()*(mlCH-80)});
+    pts.push(B);
+    for(var s=0;s<pts.length-1;s++){
+      var steps=16;
+      for(var i=0;i<steps;i++){var t=i/steps;mlIdeal.push({x:pts[s].x+(pts[s+1].x-pts[s].x)*t,y:pts[s].y+(pts[s+1].y-pts[s].y)*t});}
+    }
+    mlIdeal.push(B);
+  } else if(mlMode==='circle'){
+    var cx=mlCW/2,cy=mlCH/2,r=Math.min(mlCW,mlCH)*0.35;
+    A={x:cx+r,y:cy};
+    for(var i=0;i<=90;i++){var a=i/90*Math.PI*2;mlIdeal.push({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});}
+    B=A;
+  }
+  mlIdeal._A=mlIdeal[0]; mlIdeal._B=mlIdeal[mlIdeal.length-1];
+}
+function mlDraw(){
+  mlCtx.fillStyle='#0d1520';mlCtx.fillRect(0,0,mlCW,mlCH);
+  if(!mlIdeal.length) return;
+  var A=mlIdeal[0],B=mlIdeal[mlIdeal.length-1];
+  // Corridor shading
+  if(mlMode==='corridor'){
+    mlCtx.strokeStyle='rgba(20,60,100,0.3)';mlCtx.lineWidth=30;mlCtx.lineCap='round';mlCtx.lineJoin='round';
+    mlCtx.beginPath();mlCtx.moveTo(mlIdeal[0].x,mlIdeal[0].y);
+    mlIdeal.forEach(function(p){mlCtx.lineTo(p.x,p.y);});mlCtx.stroke();mlCtx.lineCap='butt';
+  }
+  // Ideal path
+  mlCtx.strokeStyle='#1a3a5a';mlCtx.lineWidth=mlMode==='corridor'?0.5:1.5;
+  mlCtx.setLineDash(mlMode==='circle'?[]:[6,4]);
+  mlCtx.beginPath();mlCtx.moveTo(mlIdeal[0].x,mlIdeal[0].y);
+  mlIdeal.forEach(function(p){mlCtx.lineTo(p.x,p.y);});mlCtx.stroke();
+  mlCtx.setLineDash([]);
+  // Start = green
+  mlCtx.beginPath();mlCtx.arc(A.x,A.y,9,0,Math.PI*2);mlCtx.fillStyle='#00cc66';mlCtx.fill();
+  mlCtx.fillStyle='#003322';mlCtx.font='bold 10px Courier New';mlCtx.textAlign='center';mlCtx.textBaseline='middle';
+  mlCtx.fillText('A',A.x,A.y);
+  // End = red (skip for circle)
+  if(mlMode!=='circle'){
+    mlCtx.beginPath();mlCtx.arc(B.x,B.y,9,0,Math.PI*2);mlCtx.fillStyle='#cc2222';mlCtx.fill();
+    mlCtx.fillStyle='#ffcccc';mlCtx.font='bold 10px Courier New';mlCtx.textAlign='center';mlCtx.textBaseline='middle';
+    mlCtx.fillText('B',B.x,B.y);
+  }
+  mlCtx.textBaseline='alphabetic';
+  // User path
+  if(mlPath.length>1){
+    mlCtx.strokeStyle='#00c8f0';mlCtx.lineWidth=2.5;mlCtx.lineCap='round';
+    mlCtx.beginPath();mlCtx.moveTo(mlPath[0].x,mlPath[0].y);
+    mlPath.forEach(function(p){mlCtx.lineTo(p.x,p.y);});mlCtx.stroke();mlCtx.lineCap='butt';
+  }
+}
+function mlDistToIdeal(x,y){
+  var min=9999;
+  mlIdeal.forEach(function(p){var d=Math.sqrt(Math.pow(x-p.x,2)+Math.pow(y-p.y,2));if(d<min)min=d;});
+  return min;
+}
+function mlDown(x,y){
+  if(mlDone||!mlIdeal.length) return;
+  var A=mlIdeal[0];
+  if(Math.sqrt(Math.pow(x-A.x,2)+Math.pow(y-A.y,2))<22){
+    mlDrawing=true;mlPath=[{x,y}];mlT0=Date.now();mlDone=false;
+  }
+}
+function mlMove(x,y){
+  if(!mlDrawing) return;
+  mlPath.push({x,y});mlDraw();
+}
+function mlUp(){
+  if(!mlDrawing) return;
+  mlDrawing=false;
+  var elapsed=Date.now()-mlT0;
+  if(mlPath.length<5){document.getElementById('ml-hint').textContent='Занадто коротко.';return;}
+  var B=mlIdeal[mlIdeal.length-1];
+  var last=mlPath[mlPath.length-1];
+  var distToEnd=Math.sqrt(Math.pow(last.x-B.x,2)+Math.pow(last.y-B.y,2));
+  if(mlMode!=='circle'&&distToEnd>40){
+    document.getElementById('ml-hint').textContent='Не дійшов до B. Спробуй ще.';mlDraw();return;
+  }
+  var devs=mlPath.map(function(p){return mlDistToIdeal(p.x,p.y);});
+  var avg=Math.round(devs.reduce(function(a,b){return a+b;},0)/devs.length);
+  var max2=Math.round(Math.max.apply(null,devs));
+  mlHistory.push(avg); mlTimes.push(elapsed);
+  var grade=avg<8?'★ відмінно':avg<18?'добре':avg<35?'задовільно':'слабко';
+  document.getElementById('timer').textContent=(Math.round(elapsed/100)/10)+'с';
+  document.getElementById('timer').className='done';
+  document.getElementById('target').innerHTML='Відхилення: <span>'+avg+'px</span> — '+grade;
+  // History
+  document.getElementById('ml-history').innerHTML=mlHistory.map(function(e,i){
+    return '<div class="hist-item">#'+(i+1)+' '+e+'px / '+(Math.round(mlTimes[i]/100)/10)+'с</div>';
+  }).join('');
+  mlDone=true;mlDraw();
 }
 
 </script>
