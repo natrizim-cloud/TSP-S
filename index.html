@@ -696,7 +696,6 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
     <div id="ms-overlay" style="position:absolute;inset:0;z-index:20;background:rgba(9,12,18,0.97);
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       border-radius:3px;backdrop-filter:blur(4px);">
-      <img src="" id="ms-logo" style="width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(200,0,0,0.8));margin-bottom:14px;">
       <div style="font-family:'Courier New',monospace;font-size:18px;font-weight:bold;letter-spacing:3px;color:#00e0ff;margin-bottom:6px;">ЦІЛЬ</div>
       <div style="font-family:'Courier New',monospace;font-size:10px;color:#3a6a8a;letter-spacing:2px;margin-bottom:20px;">10 ПОСТРІЛІВ · ТОЧНІСТЬ + РЕАКЦІЯ</div>
       <button onclick="msStart()" style="font-size:13px;letter-spacing:3px;padding:10px 28px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;">▶ СТАРТ</button>
@@ -712,7 +711,6 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
     <div id="mt-overlay" style="position:absolute;inset:0;z-index:20;background:rgba(9,12,18,0.97);
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       border-radius:3px;backdrop-filter:blur(4px);">
-      <img src="" id="mt-logo" style="width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(200,0,0,0.8));margin-bottom:14px;">
       <div style="font-family:'Courier New',monospace;font-size:18px;font-weight:bold;letter-spacing:3px;color:#00e0ff;margin-bottom:6px;">СУПРОВІД</div>
       <div style="font-family:'Courier New',monospace;font-size:10px;color:#3a6a8a;letter-spacing:2px;margin-bottom:20px;">20 СЕКУНД · УТРИМУЙ КУРСОР НА КОЛІ</div>
       <button onclick="mtStart()" style="font-size:13px;letter-spacing:3px;padding:10px 28px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px;">▶ СТАРТ</button>
@@ -728,7 +726,6 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
     <div id="ml-overlay" style="position:absolute;inset:0;z-index:20;background:rgba(9,12,18,0.97);
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       border-radius:3px;backdrop-filter:blur(4px);">
-      <img src="" id="ml-logo" style="width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(200,0,0,0.8));margin-bottom:14px;">
       <div style="font-family:'Courier New',monospace;font-size:18px;font-weight:bold;letter-spacing:3px;color:#00e0ff;margin-bottom:6px;">ЛІНІЯ</div>
       <div style="font-family:'Courier New',monospace;font-size:10px;color:#3a6a8a;letter-spacing:2px;margin-bottom:16px;">ОБЕРІТЬ РЕЖИМ</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;">
@@ -2569,9 +2566,6 @@ function initCatch() {
   catchCanvas.addEventListener('touchstart', onCatchClick, { passive: false });
 
   document.getElementById('catch-logo').src = document.getElementById('hdr-logo').src;
-  document.getElementById('ms-logo').src = LOGO_SRC;
-  document.getElementById('mt-logo').src = LOGO_SRC;
-  document.getElementById('ml-logo').src = LOGO_SRC;
   catchShowStart();
 }
 
@@ -3009,12 +3003,23 @@ function motorSniperStop(){ msRunning=false; }
 
 function initMotorSniper(){
   if(msInited) return; msInited=true;
+  if(MOBILE){
+    // Show PC-only message
+    var ov=document.getElementById('ms-overlay');
+    ov.innerHTML='<div style="font-family:Courier New,monospace;text-align:center;padding:20px;">' +
+      '<div style="font-size:32px;margin-bottom:16px;">🖥</div>' +
+      '<div style="font-size:14px;font-weight:bold;letter-spacing:2px;color:#cc2222;margin-bottom:10px;">ТІЛЬКИ ДЛЯ ПК</div>' +
+      '<div style="font-size:10px;color:#3a6a8a;letter-spacing:1px;line-height:2;">Цей тест потребує мишки.<br>Відкрий на комп\'ютері.</div>' +
+      '<button onclick="goMenu()" style="margin-top:20px;font-size:11px;letter-spacing:2px;padding:8px 20px;background:transparent;border:1px solid #2a5a8a;color:#6aa8cc;font-family:Courier New,monospace;cursor:pointer;border-radius:2px;">← МЕНЮ</button>' +
+      '</div>';
+    ov.style.display='flex';
+    return;
+  }
   msCanvas=document.getElementById('ms-canvas');
   msCW=Math.min(600,window.innerWidth-32); msCH=Math.round(msCW*0.55);
   msCanvas.width=msCW; msCanvas.height=msCH;
   msCtx=msCanvas.getContext('2d');
   msCanvas.addEventListener('click', msClick);
-  msCanvas.addEventListener('touchend', function(e){e.preventDefault();var r=msCanvas.getBoundingClientRect();var t=e.changedTouches[0];var sx=msCW/r.width;msClickAt((t.clientX-r.left)*sx,(t.clientY-r.top)*sx);},{passive:false});
   msDraw();
   document.getElementById('ms-overlay').style.display='flex';
 }
@@ -3153,10 +3158,15 @@ function mtLoop(){
   if(mtObj.x>mtCW-mtObj.r){mtObj.x=mtCW-mtObj.r;mtObj.dx=-Math.abs(mtObj.dx)+(Math.random()-0.5)*0.3;}
   if(mtObj.y<mtObj.r){mtObj.y=mtObj.r;mtObj.dy=Math.abs(mtObj.dy)+(Math.random()-0.5)*0.3;}
   if(mtObj.y>mtCH-mtObj.r){mtObj.y=mtCH-mtObj.r;mtObj.dy=-Math.abs(mtObj.dy)+(Math.random()-0.5)*0.3;}
-  if(Math.random()<0.008){mtObj.dx+=(Math.random()-0.5)*1.8;mtObj.dy+=(Math.random()-0.5)*1.8;}
+  // Ramp up speed: slow for first 2s, then full speed, no slowdown
+  var el2=Date.now()-mtT0;
+  var ramp=Math.min(1, el2/2000); // 0→1 over first 2 seconds
+  var maxSpd=1.5+ramp*3.5; // 1.5 → 5 px/frame
+  var minSpd=0.8+ramp*1.2; // 0.8 → 2 px/frame
+  if(Math.random()<0.010){mtObj.dx+=(Math.random()-0.5)*2.0*ramp;mtObj.dy+=(Math.random()-0.5)*2.0*ramp;}
   var spd=Math.sqrt(mtObj.dx*mtObj.dx+mtObj.dy*mtObj.dy);
-  if(spd>5){mtObj.dx=mtObj.dx/spd*5;mtObj.dy=mtObj.dy/spd*5;}
-  if(spd<1.5){mtObj.dx*=1.3;mtObj.dy*=1.3;}
+  if(spd>maxSpd){mtObj.dx=mtObj.dx/spd*maxSpd;mtObj.dy=mtObj.dy/spd*maxSpd;}
+  if(spd<minSpd){mtObj.dx*=1.3;mtObj.dy*=1.3;}
   var inside=Math.sqrt(Math.pow(mtMx-mtObj.x,2)+Math.pow(mtMy-mtObj.y,2))<mtObj.r;
   mtFrames++;if(inside)mtHit++;
   var el=Date.now()-mtT0;
