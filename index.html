@@ -940,6 +940,8 @@ function goMenu() {
 
   // Motor reset
   motorSniperStop(); motorTrackStop(); motorLineStop();
+  mlInited=false; mlDrawing=false; mlPath=[]; mlIdeal=[];
+  msInited=false; mtInited=false;
 
   // Catch reset
   catchStop();
