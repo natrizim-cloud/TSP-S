@@ -3370,6 +3370,13 @@ function mlUp(){
   mlDone=true;mlDraw();
 }
 
+// Block Ctrl+F / Cmd+F search (anti-cheat)
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && ['f','F','g','G'].includes(e.key)) {
+    e.preventDefault();
+  }
+});
+
 </script>
 </body>
 </html>
