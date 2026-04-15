@@ -820,9 +820,14 @@ function buildDeformData(numbers, seed) {
 
 // Get display text for a number given current mode
 function getDisplayText(n) {
-  if(obsMode==='math') return arithExprs[n]||String(n);
-  if(obsMode==='text') return MOBILE ? String(n) : numToUa(n);
-  return String(n);
+  // ​ (zero-width space) between chars breaks Ctrl+F search
+  var ZW = '​';
+  if(obsMode==='math'){
+    var expr = arithExprs[n]||String(n);
+    return expr.split('').join(ZW);
+  }
+  if(obsMode==='text') return MOBILE ? String(n).split('').join(ZW) : numToUa(n).split('').join(ZW);
+  return String(n).split('').join(ZW);
 }
 
 // Get adjusted font size for mode
@@ -2347,7 +2352,7 @@ function renderPrank(t) {
     txt.setAttribute('font-family','Courier New,monospace');
     txt.setAttribute('fill',textColor);
     txt.style.pointerEvents='none';
-    txt.textContent=num;
+    txt.textContent=String(num).split('').join('​');
     g.appendChild(poly); g.appendChild(txt);
     svg.appendChild(g);
   }
