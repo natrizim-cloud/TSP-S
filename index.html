@@ -1060,9 +1060,56 @@ function buildObs(seed){
   buildArithExprs(numbers, seed);
   buildDeformData(numbers, seed);
   initRng(seed+777); obsChaosPhases=polys.map(()=>rng()*360);
+  clearNumCache();
   document.getElementById('total-hint').textContent=total;
   if(obsMode==='chaos') obsRenderLoop(); else renderObs();
 }
+
+// ===== NUMBER → IMAGE (anti Ctrl+F) =====
+var _numImgCache = {};
+function numToImage(text, color, fontSize, bgColor) {
+  // Cache key — unique per text+color+size combination
+  var key = text + '|' + color + '|' + fontSize;
+  if (_numImgCache[key]) return _numImgCache[key];
+  var pad = 4;
+  var c = document.createElement('canvas');
+  // Measure text width
+  var ctx = c.getContext('2d');
+  ctx.font = 'bold ' + fontSize + 'px Courier New';
+  var tw = Math.ceil(ctx.measureText(text).width) + pad * 2;
+  var th = Math.ceil(fontSize * 1.3) + pad;
+  c.width = tw; c.height = th;
+  ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, tw, th);
+  ctx.font = 'bold ' + fontSize + 'px Courier New';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, tw / 2, th / 2);
+  var dataUrl = c.toDataURL('image/png');
+  _numImgCache[key] = {url: dataUrl, w: tw, h: th};
+  return _numImgCache[key];
+}
+function clearNumCache() { _numImgCache = {}; }
+
+// Render number as SVG <image> instead of <text> — Ctrl+F blind
+function svgNumImage(text, color, fontSize, cx, cy, angle) {
+  var img_data = numToImage(text, color, fontSize);
+  var img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+  img.setAttribute('href', img_data.url);
+  img.setAttribute('width', img_data.w);
+  img.setAttribute('height', img_data.h);
+  var x = cx - img_data.w / 2;
+  var y = cy - img_data.h / 2;
+  img.setAttribute('x', x);
+  img.setAttribute('y', y);
+  img.style.pointerEvents = 'none';
+  if (angle) {
+    img.setAttribute('transform', 'rotate(' + angle.toFixed(1) + ',' + cx.toFixed(1) + ',' + cy.toFixed(1) + ')');
+  }
+  return img;
+}
+// ==========================================
 function renderObs(){
   const svg=document.getElementById('tbl'); svg.innerHTML='';
   polys.forEach((pts,i)=>{
@@ -1094,15 +1141,22 @@ function renderObs(){
     poly.setAttribute('fill',bgFill);
     poly.setAttribute('stroke',isCorrect?'#00ff88':isWrong?'#ff4444':'#080c14');
     poly.setAttribute('stroke-width',isCorrect||isWrong?3:1.2);
-    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('x',c.x); txt.setAttribute('y',c.y+modeFs*0.38);
-    txt.setAttribute('text-anchor','middle'); txt.setAttribute('font-size',modeFs);
-    txt.setAttribute('font-weight','bold'); txt.setAttribute('font-family','Courier New,monospace');
-    txt.setAttribute('fill',txtFill);
-    txt.style.pointerEvents='none';
-    txt.textContent=getDisplayText(numbers[i]);
-    applyModeTransform(txt,numbers[i],c.x,c.y+modeFs*0.38,modeFs);
-    g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
+    var dispText = getDisplayText(numbers[i]);
+    var numEl;
+    if(obsMode==='chaos'){
+      // Chaos mode: animated color — use SVG text (color changes every frame anyway)
+      numEl=document.createElementNS('http://www.w3.org/2000/svg','text');
+      numEl.setAttribute('x',c.x); numEl.setAttribute('y',c.y+modeFs*0.38);
+      numEl.setAttribute('text-anchor','middle'); numEl.setAttribute('font-size',modeFs);
+      numEl.setAttribute('font-weight','bold'); numEl.setAttribute('font-family','Courier New,monospace');
+      numEl.setAttribute('fill',txtFill); numEl.style.pointerEvents='none';
+      numEl.textContent=dispText;
+    } else {
+      // All other modes: render as PNG image — Ctrl+F cannot find it
+      var angle2 = (obsMode==='deform'&&deformData[numbers[i]])?deformData[numbers[i]].angle:0;
+      numEl = svgNumImage(dispText, txtFill, modeFs, c.x, c.y+modeFs*0.1, angle2);
+    }
+    g.appendChild(poly); g.appendChild(numEl); svg.appendChild(g);
   });
 }
 function handleClick(idx){
