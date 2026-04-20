@@ -464,21 +464,18 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
 .n-ioval.active { fill: #000; }
 
 .neuro-btn-row {
-  display: grid; grid-template-columns: 1fr 2.5fr; gap: 8px;
+  display: block;
   margin-bottom: 8px;
 }
 .neuro-btn {
-  padding: 12px 14px; font-family: inherit; font-size: 12px;
+  width: 100%;
+  padding: 11px 14px; font-family: inherit; font-size: 11px;
   letter-spacing: 2px; border-radius: 3px; cursor: pointer;
   border: 1px solid var(--border); background: var(--panel);
-  color: var(--text); text-align: center;
+  color: var(--dim); text-align: center;
   -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
 }
-.neuro-btn.primary {
-  background: #0d2040; border-color: #0088aa; color: var(--cyan);
-}
-.neuro-btn.primary:hover:not(:disabled) { background: #133050; border-color: var(--cyan); }
-.neuro-btn.primary:disabled { opacity: 0.3; cursor: not-allowed; }
 .neuro-btn.ghost:hover { border-color: var(--cyan); color: var(--cyan); }
 
 .neuro-fb {
@@ -893,7 +890,7 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
       Граф з вузлів і зв'язків. Числа на зв'язках — <b>ціна переходу</b>.<br>
       Клікай на вузли, проклади маршрут від <b>ВХОДУ</b> до <b>ВИХОДУ</b>.<br>
       Рух можливий в будь-якому напрямку. Мета — найбільша сума.<br>
-      Повторний клік на вузол = скасувати крок.
+      Повторний клік на вузол скасовує крок. Сабміт — автоматично на виході.
     </div>
     <div class="neuro-levels">
       <button class="neuro-level-btn" onclick="neuroStart(1)">
@@ -934,8 +931,7 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
       <div class="neuro-click-layer" id="neuro-clicks"></div>
     </div>
     <div class="neuro-btn-row">
-      <button class="neuro-btn ghost" onclick="neuroReset()">↺</button>
-      <button class="neuro-btn primary" id="neuro-submit" onclick="neuroSubmit()" disabled>ПІДТВЕРДИТИ</button>
+      <button class="neuro-btn ghost" onclick="neuroReset()">↺ СКИНУТИ ШЛЯХ</button>
     </div>
     <div class="neuro-fb" id="neuro-fb"></div>
   </div>
@@ -3728,7 +3724,7 @@ function neuroNextTask() {
   fb.textContent = ''; fb.className = 'neuro-fb';
 
   neuroState.task = neuroGenTask(neuroState.level);
-  neuroState.path = [];
+  neuroState.path = [neuroState.task.inputId];
   neuroUpdate();
 
   neuroState.taskStart = performance.now();
@@ -3845,18 +3841,24 @@ function neuroCurSum() {
 function neuroOnClick(nid) {
   var task = neuroState.task;
   var path = neuroState.path;
+  // Click on input: reset path (but only if user already went somewhere)
   if (nid === task.inputId) {
-    neuroState.path = [nid];
-    if (navigator.vibrate) navigator.vibrate(8);
-    neuroUpdate();
+    if (path.length > 1) {
+      neuroState.path = [nid];
+      if (navigator.vibrate) navigator.vibrate(8);
+      neuroUpdate();
+    }
     return;
   }
   if (path.length === 0) return;
   var last = path[path.length - 1];
+  // Click on current last = undo
   if (nid === last) {
-    path.pop();
-    if (navigator.vibrate) navigator.vibrate(8);
-    neuroUpdate();
+    if (path.length > 1) {
+      path.pop();
+      if (navigator.vibrate) navigator.vibrate(8);
+      neuroUpdate();
+    }
     return;
   }
   if (path.indexOf(nid) !== -1) return;
@@ -3864,6 +3866,10 @@ function neuroOnClick(nid) {
   path.push(nid);
   if (navigator.vibrate) navigator.vibrate(8);
   neuroUpdate();
+  // Auto-submit when we reach the output
+  if (nid === task.outputId) {
+    neuroSubmit();
+  }
 }
 
 function neuroReset() {
@@ -3875,9 +3881,6 @@ function neuroReset() {
 function neuroUpdate() {
   neuroRender();
   document.getElementById('neuro-sumval').textContent = neuroCurSum();
-  var last = neuroState.path[neuroState.path.length - 1];
-  var canSubmit = last === neuroState.task.outputId;
-  document.getElementById('neuro-submit').disabled = !canSubmit;
 }
 
 // ---- Render ----
@@ -4040,7 +4043,6 @@ function neuroSubmit() {
     fb.textContent = '✗ ' + userSum + ' / макс. ' + maxSum + ' · ' + effPct + '%';
     fb.className = 'neuro-fb err';
   }
-  document.getElementById('neuro-submit').disabled = true;
   setTimeout(neuroNextTask, optimal ? 1000 : 2200);
 }
 
