@@ -111,15 +111,19 @@
         </div>
         <h2 style="margin:12px 0 6px">ПЕРЕШКОДИ НА ПОЛІ</h2>
         <div id="coverChips"></div>
-        <h2 style="margin-top:11px">РЕЖИМ РУХУ ТОЧКИ</h2>
-        <div class="grid3">
+        <h2 style="margin-top:11px">ПОЛОЖЕННЯ ФІГУРИ</h2>
+        <div class="grid2">
+          <button id="stStand" class="sm on">стоячи<br><span style="font-size:9.5px;opacity:.7">1.5 м/с</span></button>
+          <button id="stCrouch" class="sm">на коліні<br><span style="font-size:9.5px;opacity:.7">0.75 м/с</span></button>
+        </div>
+        <h2 style="margin-top:11px">ТЕМП ТОЧКИ МАРШРУТУ</h2>
+        <div class="grid2">
           <button id="mWalk" class="sm on">крок</button>
-          <button id="mCrouch" class="sm">гуськом</button>
-          <button id="mSprint" class="sm">спринт</button>
+          <button id="mSprint" class="sm">спринт<br><span style="font-size:9.5px;opacity:.7">4.5 · без вогню</span></button>
         </div>
         <button id="clrAll" class="sm danger" style="width:100%;margin-top:6px">стерти всі маршрути</button>
         <button id="wipeAll" class="sm danger" style="width:100%;margin-top:5px">⌦ очистити площадку</button>
-        <p class="hint" id="routeHint">Обери фігуру вище і клікай по площадці — точки її маршруту. Крок 1.5 м/с · гуськом 0.75 · спринт до 4.5 з розгоном (без вогню, огляд 30°).<br>Жовта ручка на точці — куди тримати сектор на цьому відрізку (до ±140° від руху). Shift-клік по ручці — знову вперед.</p>
+        <p class="hint" id="routeHint"><b>Положення</b> — властивість самої фігури: обрав і натиснув, вона одразу присідає чи встає, і так іде весь сценарій. На коліні — 0.75 м/с, і низькі укриття ховають.<br><b>Темп</b> — записується в точку маршруту, яку ставиш наступною. Спринт піднімає з коліна, вогню на ньому немає, огляд 30°.<br>Жовта ручка на точці — куди тримати сектор (±140° від руху). Shift-клік — знову вперед.</p>
       </div>
       <div class="card">
         <h2>СТОРОНИ</h2>
@@ -167,7 +171,9 @@
 </div>
 <script>
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
-const ROOM={x0:1,y0:1,w:24,h:17},OFF={x:22,y:22};let SCALE=38,BASE=38,ZOOM=1,PAN={x:0,y:0};
+const ROOM={x0:1,y0:1,w:24,h:17},OFF={x:22,y:22};let SCALE=38,BASE=38,ZOOM=1,PAN={x:0,y:0},UI=1;
+function updUI(){const r=cv.getBoundingClientRect();
+  UI=Math.max(1,Math.min(3.2,cv.width/(r.width||cv.width)))}
 // параметри моделі
 const OBS_HALF=45, SPRINT_OBS=15, FIRE_HALF=3.5, FIRE_R=39, SIGHT=54;
 const EXPOSE=1.0;                       // с у секторі вогню до ураження
@@ -196,7 +202,7 @@ function histRedo(){if(!redoStack.length)return;
   const st=redoStack.pop();histReady=false;apply(JSON.parse(st));histReady=true;flash('повернуто');syncHistBtns()}
 function flash(t){const v=document.getElementById('verdict');const old=v.textContent;
   v.textContent=t;setTimeout(()=>{if(v.textContent===t)v.textContent=old},900)}
-let selActor=null, selCover=null, ptMode='walk', lastClick=0, lastHit=null;
+let selActor=null, selCover=null, ptMode='walk', lastClick=0, lastHit=null;  // ptMode: walk | sprint
 let tool='edit', secMode=0, ruler=null;   // tool: edit|pan|ruler; secMode 0=всі 1=обрана 2=немає
 
 function mkActor(x,y,face,side){return{x,y,face,side,low:false,alive:true,
@@ -343,10 +349,10 @@ function advance(a,dt){
   if(a.stun>0){a.stun-=dt;a.speed=0;return}
   if(a.route.length<2||a.seg>=a.route.length-1){a.speed=0;a.done=true;return}
   if(inCover(a.x,a.y)){const q=pushOut(a.x,a.y,.3);a.x=q.x;a.y=q.y;a.detour=null}
-  const tgt=a.route[a.seg+1];a.mode=tgt.mode||'walk';
-  const wasLow=a.low;a.low=(a.mode==='crouch');
+  const tgt=a.route[a.seg+1];a.mode=(tgt.mode==='sprint')?'sprint':'walk';
+  const wasLow=a.low;a.low=(!!a.slow&&a.mode!=='sprint');   // спринт піднімає з коліна
   if(a.low!==wasLow)popup(a,a.low?'сів':'встав',a.low?'#8fd3f0':'#f0c583');
-  const vmax=a.mode==='sprint'?V_SPRINT:a.mode==='crouch'?V_CROUCH:V_WALK;
+  const vmax=a.mode==='sprint'?V_SPRINT:(a.low?V_CROUCH:V_WALK);
   if(a.mode==='sprint'){const rem=routeRemain(a),brake=a.speed*a.speed/(2*DEC);
     if(rem<=brake)a.speed=Math.max(.6,a.speed-DEC*dt);else a.speed=Math.min(vmax,a.speed+ACC*dt)}
   else a.speed=vmax;
@@ -452,16 +458,16 @@ function drawCovers(){covers.forEach(r=>{const c=m2p(covCenter(r).x,covCenter(r)
   ctx.strokeStyle=isSel?'#f0c583':'#5a6a7e';ctx.lineWidth=isSel?2.6:1.5;shapePath();ctx.stroke();ctx.setLineDash([]);ctx.restore();
   if(!playing&&!r.lock){const cor=cornersOf(r)[2],cp=m2p(cor.x,cor.y);
     ctx.save();ctx.translate(cp.x,cp.y);ctx.rotate(rad(r.ang||0));
-    ctx.fillStyle='#7d8b9c';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-9,0);ctx.lineTo(0,-9);ctx.closePath();ctx.fill();ctx.restore();
+    ctx.fillStyle='#7d8b9c';const G=11*UI;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-G,0);ctx.lineTo(0,-G);ctx.closePath();ctx.fill();ctx.restore();
     const rh=rotHandle(r),rp=m2p(rh.x,rh.y);
     ctx.strokeStyle='#7d8b9c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(rp.x,rp.y);ctx.stroke();
-    ctx.fillStyle='#f0c583';ctx.beginPath();ctx.arc(rp.x,rp.y,5,0,7);ctx.fill()}})}
+    ctx.fillStyle='#f0c583';ctx.beginPath();ctx.arc(rp.x,rp.y,6.5*UI,0,7);ctx.fill()}})}
 function modeDash(m){return m==='sprint'?[10,4]:m==='crouch'?[2,4]:[6,5]}
 function ptAim(a,i){const p=a.route[i],base=bearing(a.route[i-1],p);
   let aim=(p.aim===undefined||p.aim===null)?base:p.aim;
   const rel=norm(aim-base);if(Math.abs(rel)>AIM_MAX)aim=base+Math.sign(rel)*AIM_MAX;return aim}
-function aimHandlePos(a,i){const p=a.route[i],ang=ptAim(a,i);
-  return{x:p.x+Math.cos(rad(ang))*1.6,y:p.y+Math.sin(rad(ang))*1.6}}
+function aimHandlePos(a,i){const p=a.route[i],ang=ptAim(a,i),L=Math.max(1.6,(28*UI)/SCALE);
+  return{x:p.x+Math.cos(rad(ang))*L,y:p.y+Math.sin(rad(ang))*L}}
 function drawRoutes(){all().forEach(a=>{if(a.route.length<2&&a!==selActor)return;
   const col=a.side==='op'?'76,194,255':'229,72,77',sel=(a===selActor);
   for(let i=0;i<a.route.length-1;i++){const p=m2p(a.route[i].x,a.route[i].y),q=m2p(a.route[i+1].x,a.route[i+1].y);
@@ -469,48 +475,48 @@ function drawRoutes(){all().forEach(a=>{if(a.route.length<2&&a!==selActor)return
     ctx.setLineDash(modeDash(a.route[i+1].mode||'walk'));
     ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([])}
   a.route.forEach((p,i)=>{const q=m2p(p.x,p.y);ctx.fillStyle='rgba('+col+','+(sel?.85:.45)+')';
-    ctx.beginPath();ctx.arc(q.x,q.y,sel?5:4,0,7);ctx.fill();
-    if(sel){ctx.fillStyle='#0e1116';ctx.font='bold 9px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,q.x,q.y)}});
+    ctx.beginPath();ctx.arc(q.x,q.y,(sel?5.5:4.5)*UI,0,7);ctx.fill();
+    if(sel){ctx.fillStyle='#0e1116';ctx.font='bold '+Math.round(9*UI)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,q.x,q.y)}});
   if(sel&&!playing)for(let i=1;i<a.route.length;i++){const p=m2p(a.route[i].x,a.route[i].y),
     h=aimHandlePos(a,i),hp=m2p(h.x,h.y),custom=(a.route[i].aim!==undefined&&a.route[i].aim!==null);
     ctx.strokeStyle=custom?'rgba(240,197,131,.9)':'rgba(240,197,131,.4)';ctx.lineWidth=1.4;
     ctx.setLineDash(custom?[]:[3,3]);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(hp.x,hp.y);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='#f0c583';ctx.beginPath();ctx.arc(hp.x,hp.y,4.5,0,7);ctx.fill()}})}
-function drawActor(a){const p=m2p(a.x,a.y),R=a.low?8:12,isOp=a.side==='op';
+    ctx.fillStyle='#f0c583';ctx.beginPath();ctx.arc(hp.x,hp.y,6*UI,0,7);ctx.fill()}})}
+function drawActor(a){const p=m2p(a.x,a.y),R=(a.low?8:12)*UI,isOp=a.side==='op';
   const base=isOp?'#4cc2ff':'#e5484d',dead=isOp?'#4a5460':'#5a3033';
   const showSec=(secMode===0)||(secMode===1&&a===selActor);
   if(a.alive&&showSec){const c=isOp?'76,194,255':'229,72,77';
     fillPoly(sectorPoly(a,obsHalf(a),SIGHT),'rgba('+c+',.10)','rgba('+c+',.28)');
     if(canFire(a))fillPoly(sectorPoly(a,FIRE_HALF,FIRE_R),'rgba('+c+',.45)','rgba('+c+',.9)')}
   ctx.fillStyle=a.alive?base:dead;ctx.beginPath();ctx.arc(p.x,p.y,R,0,7);ctx.fill();
-  ctx.strokeStyle='#0e1116';ctx.lineWidth=2;ctx.stroke();
-  if(a.low&&a.alive){ctx.strokeStyle='rgba('+(isOp?'76,194,255':'229,72,77')+',.55)';ctx.lineWidth=1.4;
-    ctx.beginPath();ctx.arc(p.x,p.y,13,0,7);ctx.stroke()}
-  if(a===selActor){ctx.strokeStyle='#f0c583';ctx.lineWidth=2;ctx.setLineDash([3,3]);
-    ctx.beginPath();ctx.arc(p.x,p.y,R+6,0,7);ctx.stroke();ctx.setLineDash([])}
+  ctx.strokeStyle='#0e1116';ctx.lineWidth=2*UI;ctx.stroke();
+  if(a.low&&a.alive){ctx.strokeStyle='rgba('+(isOp?'76,194,255':'229,72,77')+',.55)';ctx.lineWidth=1.4*UI;
+    ctx.beginPath();ctx.arc(p.x,p.y,R+5*UI,0,7);ctx.stroke()}
+  if(a===selActor){ctx.strokeStyle='#f0c583';ctx.lineWidth=2*UI;ctx.setLineDash([3*UI,3*UI]);
+    ctx.beginPath();ctx.arc(p.x,p.y,R+7*UI,0,7);ctx.stroke();ctx.setLineDash([])}
   const idx=(isOp?ops:foes).indexOf(a)+1;
-  ctx.fillStyle=a.alive?'#04222f':'#8a94a0';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle=a.alive?'#04222f':'#8a94a0';ctx.font='bold '+Math.round(12*UI)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(a.alive?idx:'✕',p.x,p.y);
-  if(a.alive){const h=m2p(a.x+Math.cos(rad(a.face))*1.7,a.y+Math.sin(rad(a.face))*1.7);
-    ctx.strokeStyle='rgba('+(isOp?'76,194,255':'229,72,77')+',.8)';ctx.lineWidth=1.6;
+  if(a.alive){const h=m2p(a.x+Math.cos(rad(a.face))*HDL(),a.y+Math.sin(rad(a.face))*HDL());
+    ctx.strokeStyle='rgba('+(isOp?'76,194,255':'229,72,77')+',.8)';ctx.lineWidth=1.6*UI;
     ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(h.x,h.y);ctx.stroke();
-    ctx.fillStyle=base;ctx.beginPath();ctx.arc(h.x,h.y,4.5,0,7);ctx.fill()}
+    ctx.fillStyle=base;ctx.beginPath();ctx.arc(h.x,h.y,6*UI,0,7);ctx.fill()}
   // індикатор під прицілом
   if(a.alive){let mx=0;for(const s of all())if(s.side!==a.side&&s.alive){const k=a.side+all().indexOf(a);mx=Math.max(mx,s.expo[k]||0)}
-    if(mx>.05){const w=26,fr=Math.min(1,mx/EXPOSE);ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(p.x-w/2,p.y-R-11,w,4);
-      ctx.fillStyle=isOp?'#e5484d':'#4cc2ff';ctx.fillRect(p.x-w/2,p.y-R-11,w*fr,4)}}
-  if(a.alive){ctx.font='9px system-ui';ctx.textAlign='center';ctx.textBaseline='top';
-    ctx.fillStyle=a.low?'#8fd3f0':'#78838f';ctx.fillText(a.low?'коліно':'стоячи',p.x,p.y+R+3);
-    if(a.lock){ctx.fillStyle='rgba(240,197,131,.9)';ctx.fillText('🔒',p.x+R+6,p.y-R)}}
-  if(a.stun>0){ctx.fillStyle='#f0c583';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText('!',p.x,p.y-R-16)}
+    if(mx>.05){const w=26*UI,fr=Math.min(1,mx/EXPOSE);ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(p.x-w/2,p.y-R-11*UI,w,4*UI);
+      ctx.fillStyle=isOp?'#e5484d':'#4cc2ff';ctx.fillRect(p.x-w/2,p.y-R-11*UI,w*fr,4*UI)}}
+  if(a.alive){ctx.font=Math.round(9.5*UI)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillStyle=a.low?'#8fd3f0':'#78838f';ctx.fillText(a.low?'коліно':'стоячи',p.x,p.y+R+3*UI);
+    if(a.lock){ctx.fillStyle='rgba(240,197,131,.9)';ctx.fillText('🔒',p.x+R+7*UI,p.y-R)}}
+  if(a.stun>0){ctx.fillStyle='#f0c583';ctx.font='bold '+Math.round(11*UI)+'px system-ui';ctx.textAlign='center';ctx.fillText('!',p.x,p.y-R-16*UI)}
   if(a.alive&&a.track&&a.track.alive){const q=m2p(a.track.x,a.track.y);
     ctx.strokeStyle='rgba(240,197,131,.5)';ctx.lineWidth=1;ctx.setLineDash([2,4]);
     ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([])}}
 function drawPops(){pops.forEach(o=>{const p=m2p(o.x,o.y),up=o.t*26,al=Math.max(0,1-o.t/1.6);
-  ctx.globalAlpha=al;ctx.font='bold 15px system-ui';ctx.textAlign='center';ctx.textBaseline='bottom';
-  ctx.lineWidth=3.5;ctx.strokeStyle='rgba(14,17,22,.9)';ctx.strokeText(o.txt,p.x,p.y-20-up);
-  ctx.fillStyle=o.col;ctx.fillText(o.txt,p.x,p.y-20-up);ctx.globalAlpha=1})}
-function draw(){drawGrid();
+  ctx.globalAlpha=al;ctx.font='bold '+Math.round(15*UI)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.lineWidth=3.5*UI;ctx.strokeStyle='rgba(14,17,22,.9)';ctx.strokeText(o.txt,p.x,p.y-20*UI-up);
+  ctx.fillStyle=o.col;ctx.fillText(o.txt,p.x,p.y-20*UI-up);ctx.globalAlpha=1})}
+function draw(){updUI();drawGrid();
   const p0=m2p(ROOM.x0,ROOM.y0),p1=m2p(ROOM.x0+ROOM.w,ROOM.y0+ROOM.h);
   ctx.save();ctx.beginPath();ctx.rect(p0.x,p0.y,p1.x-p0.x,p1.y-p0.y);ctx.clip();
   drawCovers();drawRoutes();all().forEach(drawActor);drawRuler();drawPops();ctx.restore()}
@@ -530,11 +536,19 @@ function drawRuler(){if(!ruler)return;const a=m2p(ruler.a.x,ruler.a.y);
 // --- взаємодія ---
 function evPos(ev){const r=cv.getBoundingClientRect(),sx=cv.width/r.width,sy=cv.height/r.height;
   const px=(ev.clientX-r.left)*sx,py=(ev.clientY-r.top)*sy;return{mx:ROOM.x0+(px-OFF.x-PAN.x)/SCALE,my:ROOM.y0+(py-OFF.y-PAN.y)/SCALE,px,py}}
-function hitActor(pos){for(const a of all()){const p=m2p(a.x,a.y);
-  const h=m2p(a.x+Math.cos(rad(a.face))*1.7,a.y+Math.sin(rad(a.face))*1.7);
-  if(Math.hypot(pos.px-h.x,pos.py-h.y)<14)return{a,t:'handle'};
-  if(Math.hypot(pos.px-p.x,pos.py-p.y)<17)return{a,t:'body'}}return null}
-cv.addEventListener('pointerdown',ev=>{const pos=evPos(ev),now=Date.now();
+function hitActor(pos){const TH=17*UI,TB=21*UI;
+  // 1) ядро фігури — перемістити
+  for(const a of all()){const p=m2p(a.x,a.y);
+    if(Math.hypot(pos.px-p.x,pos.py-p.y)<TB*.8)return{a,t:'body'}}
+  // 2) ручка сектора
+  for(const a of all()){const h=m2p(a.x+Math.cos(rad(a.face))*HDL(),a.y+Math.sin(rad(a.face))*HDL());
+    if(Math.hypot(pos.px-h.x,pos.py-h.y)<TH)return{a,t:'handle'}}
+  // 3) широка зона тіла
+  for(const a of all()){const p=m2p(a.x,a.y);
+    if(Math.hypot(pos.px-p.x,pos.py-p.y)<TB)return{a,t:'body'}}
+  return null}
+function HDL(){return Math.max(1.8,(36*UI)/SCALE)}   // ручка сектора — не ближче 36 px екрана
+cv.addEventListener('pointerdown',ev=>{ev.preventDefault();updUI();const pos=evPos(ev),now=Date.now();
   if(tool==='pan'||ev.ctrlKey||ev.metaKey||ev.button===1){dragging={t:'pan',px:pos.px,py:pos.py};return}
   if(tool==='ruler'){if(!ruler||ruler.b){ruler={a:{x:pos.mx,y:pos.my},b:null}}
     else{ruler.b={x:pos.mx,y:pos.my}}return}
@@ -542,26 +556,27 @@ cv.addEventListener('pointerdown',ev=>{const pos=evPos(ev),now=Date.now();
   if(h){ // подвійний клік — стійка
     if(h.t==='body'&&lastHit===h.a&&now-lastClick<380){histPush();h.a.slow=!h.a.slow;h.a.low=h.a.slow;lastHit=null;resetRun();return}
     lastClick=now;lastHit=h.a;
-    if(h.t==='body'){selActor=h.a;refreshChips()}
+    if(h.t==='body')pickActor(h.a);
     if(h.t==='body'&&h.a.lock)return;
+    try{cv.setPointerCapture(ev.pointerId)}catch(e){}
     histPush();dragging={t:h.t,a:h.a};return}
   lastHit=null;
   if(selActor&&!playing)for(let i=1;i<selActor.route.length;i++){const h=aimHandlePos(selActor,i),hp=m2p(h.x,h.y);
-    if(Math.hypot(pos.px-hp.x,pos.py-hp.y)<13){
+    if(Math.hypot(pos.px-hp.x,pos.py-hp.y)<15*UI){
       histPush();if(ev.shiftKey){selActor.route[i].aim=null;resetRun();return}
       dragging={t:'aim',a:selActor,i};return}}
   for(let i=covers.length-1;i>=0;i--){const r=covers[i];
     const rh=rotHandle(r),rp=m2p(rh.x,rh.y);
-    if(!r.lock&&Math.hypot(pos.px-rp.x,pos.py-rp.y)<14){histPush();dragging={t:'rotate',i};return}
+    if(!r.lock&&Math.hypot(pos.px-rp.x,pos.py-rp.y)<16*UI){histPush();dragging={t:'rotate',i};return}
     const cor=cornersOf(r)[2],cp=m2p(cor.x,cor.y);
-    if(!r.lock&&Math.hypot(pos.px-cp.x,pos.py-cp.y)<15){histPush();dragging={t:'resize',i};return}
+    if(!r.lock&&Math.hypot(pos.px-cp.x,pos.py-cp.y)<17*UI){histPush();dragging={t:'resize',i};return}
     if(ptInCover(pos.mx,pos.my,r)){selCover=i;refreshChips();if(r.lock)return;
       histPush();dragging={t:'cover',i,dx:pos.mx-r.x,dy:pos.my-r.y};return}}
   // клік по полю — точка маршруту обраної фігури
   if(selActor&&pos.mx>ROOM.x0&&pos.mx<ROOM.x0+ROOM.w&&pos.my>ROOM.y0&&pos.my<ROOM.y0+ROOM.h){
     histPush();if(!selActor.route.length)selActor.route.push({x:selActor.sx,y:selActor.sy,mode:'walk'});
     const q=pushOut(pos.mx,pos.my);selActor.route.push({x:q.x,y:q.y,mode:ptMode});resetRun()}});
-cv.addEventListener('pointermove',ev=>{if(!dragging)return;const pos=evPos(ev);
+cv.addEventListener('pointermove',ev=>{if(!dragging)return;ev.preventDefault();const pos=evPos(ev);
   if(dragging.t==='pan'){PAN.x+=pos.px-dragging.px;PAN.y+=pos.py-dragging.py;dragging.px=pos.px;dragging.py=pos.py;return}
   if(tool==='ruler'&&ruler&&!ruler.b)return;
   if(dragging.t==='body'){const a=dragging.a;
@@ -585,7 +600,10 @@ cv.addEventListener('pointermove',ev=>{if(!dragging)return;const pos=evPos(ev);
     if(ev.shiftKey)r.ang=Math.round(r.ang/15)*15}});
 function unstickAll(){all().forEach(a=>{const q=pushOut(a.sx,a.sy);
   if(q.x!==a.sx||q.y!==a.sy){a.sx=a.x=q.x;a.sy=a.y=q.y;if(a.route.length)a.route[0]={x:q.x,y:q.y,mode:'walk'}}})}
-window.addEventListener('pointerup',()=>{if(dragging&&(dragging.t==='cover'||dragging.t==='rotate'||dragging.t==='resize'))unstickAll();dragging=null});
+function endDrag(){if(dragging&&(dragging.t==='cover'||dragging.t==='rotate'||dragging.t==='resize'))unstickAll();dragging=null}
+window.addEventListener('pointerup',endDrag);
+window.addEventListener('pointercancel',endDrag);
+cv.addEventListener('pointerup',endDrag);
 
 function mkChip(txt,on,onSel,extras){const w=document.createElement('span');
   w.style.display='inline-flex';w.style.alignItems='stretch';w.style.marginRight='3px';w.style.marginBottom='3px';
@@ -601,7 +619,8 @@ function delActor(a){const arr=(a.side==='op'?ops:foes);
   histPush();arr.splice(arr.indexOf(a),1);if(selActor===a)selActor=null;resetRun();refreshChips()}
 function delCoverAt(i){histPush();covers.splice(i,1);if(selCover===i)selCover=null;
   else if(selCover>i)selCover--;resetRun();refreshChips()}
-function toggleStance(a){histPush();a.slow=!a.slow;a.low=a.slow;resetRun();refreshChips()}
+function toggleStance(a){if(a!==selActor){selActor=a;selCover=null}
+  setStance(!a.slow)}
 function mkRow(cls,nm,on,onSel,btns){const w=document.createElement('div');w.className='rw '+cls;
   const b=document.createElement('button');b.className='sm nm'+(on?' on':'');b.textContent=nm;b.onclick=onSel;w.appendChild(b);
   btns.forEach(e=>{const x=document.createElement('button');x.className='sm ic'+(e.cls||'')+(e.on?' on':'');
@@ -640,8 +659,8 @@ function refreshChips(){
   oc.innerHTML='';fc.innerHTML='';
   const row=a=>{const i=(a.side==='op'?ops:foes).indexOf(a)+1;
     const nm=(a.side==='op'?'Боєць ':'Противник ')+i+(a.route.length>1?'  ·'+(a.route.length-1):'');
-    return mkRow(a.side==='op'?'op':'foe',nm,a===selActor,()=>{selActor=a;selCover=null;refreshChips()},[
-      {txt:a.slow?'коліно':'стоячи',title:'положення',on:a.slow,fn:()=>toggleStance(a)},
+    return mkRow(a.side==='op'?'op':'foe',nm,a===selActor,()=>pickActor(a),[
+      {txt:a.slow?'коліно':'стоячи',title:'змінити положення',on:a.slow,fn:()=>toggleStance(a)},
       {txt:a.lock?'🔒':'🔓',title:'зафіксувати',on:!!a.lock,fn:()=>{a.lock=!a.lock;refreshChips()}},
       {txt:'⌫',title:'стерти маршрут',fn:()=>clearRoute(a)},
       {txt:'×',cls:' danger',title:'видалити фігуру',fn:()=>delActor(a)}])};
@@ -652,11 +671,20 @@ function refreshChips(){
       {txt:r.lock?'🔒':'🔓',title:'зафіксувати',on:!!r.lock,fn:()=>{r.lock=!r.lock;refreshChips()}},
       {txt:'×',cls:' danger',title:'видалити',fn:()=>delCoverAt(i)}]))});
   syncHistBtns()}
-function setPtMode(m){ptMode=m;['Walk','Crouch','Sprint'].forEach(k=>
-  document.getElementById('m'+k).classList.toggle('on',k.toLowerCase()===m))}
+function syncModeBtns(){
+  document.getElementById('mWalk').classList.toggle('on',ptMode==='walk');
+  document.getElementById('mSprint').classList.toggle('on',ptMode==='sprint');
+  const low=selActor?!!selActor.slow:false;
+  document.getElementById('stStand').classList.toggle('on',!low);
+  document.getElementById('stCrouch').classList.toggle('on',low)}
+function setPtMode(m){ptMode=m;syncModeBtns()}
+function setStance(low){if(!selActor){flash('спершу обери фігуру');return}
+  histPush();selActor.slow=low;selActor.low=low;resetRun();syncModeBtns();refreshChips()}
+function pickActor(a){selActor=a;selCover=null;syncModeBtns();refreshChips()}
 document.getElementById('mWalk').onclick=()=>setPtMode('walk');
-document.getElementById('mCrouch').onclick=()=>setPtMode('crouch');
 document.getElementById('mSprint').onclick=()=>setPtMode('sprint');
+document.getElementById('stStand').onclick=()=>setStance(false);
+document.getElementById('stCrouch').onclick=()=>setStance(true);
 document.getElementById('play').onclick=()=>{resetRun();playing=true;addEvent('Старт.')};
 document.getElementById('stopBtn').onclick=()=>{playing=false};
 document.getElementById('clrAll').onclick=()=>{histPush();all().forEach(a=>a.route=[]);resetRun();refreshChips()};
@@ -732,7 +760,9 @@ function snapshot(brief){return{room:{x0:ROOM.x0,y0:ROOM.y0,w:ROOM.w,h:ROOM.h},
   ops:ops.map(packActor),foes:foes.map(packActor),brief:brief!==undefined?brief:currentBrief}}
 function apply(d){if(d.room){ROOM.x0=(d.room.x0!==undefined?d.room.x0:1);ROOM.y0=(d.room.y0!==undefined?d.room.y0:1);ROOM.w=d.room.w;ROOM.h=d.room.h;fitScale()}
   covers=d.covers.map(c=>({...c}));
-  const un=(o,side)=>{const a=mkActor(o.x,o.y,o.face,side);a.slow=!!o.low;a.low=a.slow;a.lock=!!o.lock;a.route=(o.route||[]).map(p=>({...p}));return a};
+  const un=(o,side)=>{const a=mkActor(o.x,o.y,o.face,side);a.slow=!!o.low;a.lock=!!o.lock;
+    if((o.route||[]).some(p=>p.mode==='crouch'))a.slow=true;      // сумісність зі старими сценаріями
+    a.low=a.slow;a.route=(o.route||[]).map(p=>({...p,mode:(p.mode==='sprint')?'sprint':'walk'}));return a};
   ops=d.ops.map(o=>un(o,'op'));foes=(d.foes||[]).map(o=>un(o,'foe'));
   selActor=null;showBrief(d.brief);resetRun();refreshChips()}
 document.getElementById('saveScn').onclick=()=>{const n=prompt('Назва сценарію:');if(!n)return;
@@ -776,7 +806,7 @@ document.addEventListener('keydown',e=>{const k=(e.key||'').toLowerCase();
   if(!(e.ctrlKey||e.metaKey))return;
   if(k==='z'&&!e.shiftKey){e.preventDefault();histUndo()}
   else if(k==='y'||(k==='z'&&e.shiftKey)){e.preventDefault();histRedo()}});
-initScene();fitScale();refreshList();refreshPalette();histReady=true;syncHistBtns();
+initScene();fitScale();refreshList();refreshPalette();syncModeBtns();histReady=true;syncHistBtns();
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;step(dt);draw();requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
