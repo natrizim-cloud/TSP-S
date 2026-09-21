@@ -147,11 +147,11 @@
         </div>
         <button id="saveScn" class="primary sm" style="width:100%;margin-top:6px">💾 Зберегти як…</button>
         <div class="grid2" style="margin-top:6px">
-          <button id="exportScn" class="sm">Експорт</button>
-          <button id="importScn" class="sm">Імпорт</button>
+          <button id="exportScn" class="sm">↗ Поділитися</button>
+          <button id="importScn" class="sm">↙ Отримати</button>
         </div>
         <input type="file" id="fileIn" accept=".json" style="display:none">
-        <p class="hint">Зберігається в цьому браузері. Якщо сторінка відкрита у вбудованому вікні, збереження може не працювати — тоді користуйся «Експорт» (текст можна скопіювати) та «Імпорт».</p>
+        <p class="hint">Площадки зберігаються лише в цьому браузері.<br><b>Щоб роздати іншим:</b> «↗ Поділитися» → «Копіювати» → надішли текст у чат. Хто отримав — «↙ Отримати» → вставив → «Завантажити». Файл не потрібен.</p>
       </div>
     </div>
   </div>
@@ -162,9 +162,10 @@
     <p id="modalHint" style="font-size:12px;color:#78838f;margin:0 0 8px;line-height:1.5"></p>
     <textarea id="modalText" style="width:100%;height:220px;background:#0f141a;color:#c9d3df;
       border:1px solid #232a34;border-radius:7px;padding:9px;font-family:ui-monospace,monospace;font-size:11px"></textarea>
-    <div style="display:flex;gap:7px;margin-top:9px;justify-content:flex-end">
-      <button id="modalOk" class="primary sm"></button>
-      <button id="modalClose" class="sm">Закрити</button>
+    <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">
+      <button id="modalOk" class="primary" style="flex:1;min-width:150px;padding:12px 14px;font-size:13px"></button>
+      <button id="modalAlt" class="sm" style="padding:12px 14px;display:none"></button>
+      <button id="modalClose" class="sm" style="padding:12px 14px">Закрити</button>
     </div>
   </div>
 </div>
@@ -569,7 +570,8 @@ cv.addEventListener('pointerdown',ev=>{ev.preventDefault();updUI();const pos=evP
     const rh=rotHandle(r),rp=m2p(rh.x,rh.y);
     if(!r.lock&&Math.hypot(pos.px-rp.x,pos.py-rp.y)<16*UI){histPush();dragging={t:'rotate',i};return}
     const cor=cornersOf(r)[2],cp=m2p(cor.x,cor.y);
-    if(!r.lock&&Math.hypot(pos.px-cp.x,pos.py-cp.y)<17*UI){histPush();dragging={t:'resize',i};return}
+    if(!r.lock&&Math.hypot(pos.px-cp.x,pos.py-cp.y)<17*UI){histPush();
+      dragging={t:'resize',i,ar:(r.w>0?r.h/r.w:1)};return}
     if(ptInCover(pos.mx,pos.my,r)){selCover=i;refreshChips();if(r.lock)return;
       histPush();dragging={t:'cover',i,dx:pos.mx-r.x,dy:pos.my-r.y};return}}
   // клік по полю — точка маршруту обраної фігури
@@ -590,7 +592,16 @@ cv.addEventListener('pointermove',ev=>{if(!dragging)return;ev.preventDefault();c
     r.x=Math.max(ROOM.x0-r.w/2,Math.min(ROOM.x0+ROOM.w-r.w/2,nx));
     r.y=Math.max(ROOM.y0-r.h/2,Math.min(ROOM.y0+ROOM.h-r.h/2,ny))}
   else if(dragging.t==='resize'){const r=covers[dragging.i],L=toLocal(pos.mx,pos.my,r);
-    const nw=Math.max(.5,Math.min(30,Math.abs(L.lx)*2)),nh=Math.max(.5,Math.min(30,Math.abs(L.ly)*2));
+    let nw=Math.abs(L.lx)*2,nh=Math.abs(L.ly)*2;
+    if(ev.shiftKey||r.prop){
+      // Shift або замок «⊙»: коло лишається колом, прямокутник тримає свої пропорції
+      const ar=Math.max(.02,Math.min(50,isEll(r)?1:(dragging.ar||1)));
+      let b=Math.max(nw,nh/ar);                 // ведучий бік
+      b=Math.max(.5,Math.min(30,b));
+      if(b*ar>30)b=30/ar;                       // щоб і другий бік влазив у межі
+      if(b*ar<.5)b=.5/ar;
+      nw=b;nh=b*ar}
+    nw=Math.max(.5,Math.min(30,nw));nh=Math.max(.5,Math.min(30,nh));
     const c=covCenter(r);r.w=nw;r.h=nh;r.x=c.x-nw/2;r.y=c.y-nh/2}
   else if(dragging.t==='aim'){const a=dragging.a,p=a.route[dragging.i];
     const base=bearing(a.route[dragging.i-1],p);let ang=deg(Math.atan2(pos.my-p.y,pos.mx-p.x));
@@ -640,7 +651,7 @@ function userTpl(){try{return JSON.parse(localStorage.getItem(TPL_KEY)||'[]')}ca
 function saveUserTpl(a){try{localStorage.setItem(TPL_KEY,JSON.stringify(a))}catch(e){}}
 function addFromTpl(t){histPush();
   covers.push({x:ROOM.x0+ROOM.w/2-t.w/2,y:ROOM.y0+ROOM.h/2-t.h/2,w:t.w,h:t.h,ang:0,
-    tall:t.tall!==false,shape:t.shape||'rect'});
+    tall:t.tall!==false,shape:t.shape||'rect',prop:(t.shape==='ellipse'&&Math.abs(t.w-t.h)<.01)});
   selCover=covers.length-1;refreshChips()}
 function refreshPalette(){const el=document.getElementById('palette');el.innerHTML='';
   const mk=(t,own)=>{const w=document.createElement('span');w.style.display='inline-flex';w.style.marginRight='3px';w.style.marginBottom='3px';
@@ -666,8 +677,11 @@ function refreshChips(){
       {txt:'×',cls:' danger',title:'видалити фігуру',fn:()=>delActor(a)}])};
   ops.forEach(a=>oc.appendChild(row(a)));foes.forEach(a=>fc.appendChild(row(a)));
   const cc=document.getElementById('coverChips');cc.innerHTML='';
-  covers.forEach((r,i)=>{const nm=(r.shape==='ellipse'?'○ ':'▭ ')+(r.tall===false?'низьке ':'')+(i+1)+'  '+r.w.toFixed(1)+'×'+r.h.toFixed(1)+' м';
+  covers.forEach((r,i)=>{const nm=(r.shape==='ellipse'?'○ ':'▭ ')+(r.tall===false?'низьке ':'')+(i+1)+'  '+r.w.toFixed(1)+'×'+r.h.toFixed(1)+' м'+(r.prop?' ⊙':'');
     cc.appendChild(mkRow('cov',nm,selCover===i,()=>{selCover=(selCover===i?null:i);refreshChips()},[
+      {txt:'⊙',title:'тримати пропорції при розтягуванні (коло лишається колом)',on:!!r.prop,
+        fn:()=>{r.prop=!r.prop;if(r.prop&&isEll(r)){const d=(r.w+r.h)/2,c=covCenter(r);
+          histPush();r.w=r.h=d;r.x=c.x-d/2;r.y=c.y-d/2}refreshChips();flash(r.prop?'пропорції зафіксовано':'пропорції вільні')}},
       {txt:r.lock?'🔒':'🔓',title:'зафіксувати',on:!!r.lock,fn:()=>{r.lock=!r.lock;refreshChips()}},
       {txt:'×',cls:' danger',title:'видалити',fn:()=>delCoverAt(i)}]))});
   syncHistBtns()}
@@ -697,14 +711,14 @@ document.getElementById('addEn').onclick=()=>{if(foes.length>=8)return;histPush(
 document.getElementById('addH').onclick=()=>{histPush();covers.push({x:ROOM.x0+2,y:ROOM.y0+2,w:4,h:.8,ang:0,tall:true});refreshChips()};
 document.getElementById('dupCover').onclick=()=>{if(selCover===null){flash('обери перешкоду у списку');return}
   const r=covers[selCover];histPush();
-  covers.push({x:r.x+1,y:r.y+1,w:r.w,h:r.h,ang:r.ang||0,tall:r.tall!==false,shape:r.shape||'rect'});
+  covers.push({x:r.x+1,y:r.y+1,w:r.w,h:r.h,ang:r.ang||0,tall:r.tall!==false,shape:r.shape||'rect',prop:!!r.prop});
   selCover=covers.length-1;refreshChips()};
 document.getElementById('saveTpl').onclick=()=>{if(selCover===null){flash('обери перешкоду у списку');return}
   const r=covers[selCover];const n=prompt('Назва шаблону:');if(!n)return;
   const a=userTpl().filter(x=>x.n!==n);
   a.push({n,w:+r.w.toFixed(2),h:+r.h.toFixed(2),shape:r.shape||'rect',tall:r.tall!==false});
   saveUserTpl(a);refreshPalette();flash('шаблон збережено')};
-document.getElementById('addCirc').onclick=()=>{histPush();covers.push({x:ROOM.x0+2,y:ROOM.y0+2,w:1.6,h:1.6,ang:0,tall:true,shape:'ellipse'});refreshChips()};
+document.getElementById('addCirc').onclick=()=>{histPush();covers.push({x:ROOM.x0+2,y:ROOM.y0+2,w:1.6,h:1.6,ang:0,tall:true,shape:'ellipse',prop:true});refreshChips()};
 document.getElementById('addLow').onclick=()=>{histPush();covers.push({x:ROOM.x0+2,y:ROOM.y0+4,w:3,h:.8,ang:0,tall:false});refreshChips()};
 function fitScale(){BASE=Math.min((cv.width-2*OFF.x)/ROOM.w,(cv.height-2*OFF.y)/ROOM.h);SCALE=BASE*ZOOM}
 function setZoom(z){const cx=cv.width/2,cy=cv.height/2;
@@ -743,12 +757,28 @@ function readStore(){if(!lsOK)return memStore;
 function writeStore(o){memStore=o;
   if(!lsOK)return false;
   try{localStorage.setItem(KEY,JSON.stringify(o));return true}catch(e){lsOK=false;return false}}
-function modal(title,hint,text,okLabel,onOk){document.getElementById('modalTitle').textContent=title;
-  document.getElementById('modalHint').textContent=hint;const ta=document.getElementById('modalText');ta.value=text||'';
+function closeModal(){document.getElementById('modal').style.display='none'}
+function modal(title,hint,text,okLabel,onOk,altLabel,onAlt){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalHint').textContent=hint;
+  const ta=document.getElementById('modalText');ta.value=text||'';
   const ok=document.getElementById('modalOk');ok.textContent=okLabel;ok.style.display=okLabel?'':'none';
-  ok.onclick=()=>{if(onOk)onOk(ta.value)};document.getElementById('modal').style.display='flex';
-  if(!okLabel||okLabel==='Копіювати')setTimeout(()=>{ta.focus();ta.select()},50)}
-document.getElementById('modalClose').onclick=()=>{document.getElementById('modal').style.display='none'};
+  ok.onclick=()=>{if(onOk)onOk(document.getElementById('modalText').value)};
+  const alt=document.getElementById('modalAlt');
+  if(altLabel){alt.textContent=altLabel;alt.style.display='';alt.onclick=()=>{if(onAlt)onAlt()}}
+  else alt.style.display='none';
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>{ta.focus();if(text)ta.select()},60)}
+// копіювання: сучасний спосіб, із запасним
+function copyText(t){
+  const done=()=>flash('скопійовано — тепер надішли це в чат');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done).catch(()=>fallbackCopy())}
+  else fallbackCopy();
+  function fallbackCopy(){const ta=document.getElementById('modalText');ta.focus();ta.select();
+    try{document.execCommand('copy')?done():flash('виділи текст і натисни Ctrl+C')}
+    catch(e){flash('виділи текст і натисни Ctrl+C')}}}
+document.getElementById('modalClose').onclick=closeModal;
 function refreshList(sel){const st=readStore(),el=document.getElementById('saved');
   el.innerHTML='<option value="">— збережені —</option>'+Object.keys(st).sort().map(n=>'<option>'+n+'</option>').join('');
   if(sel)el.value=sel}
@@ -756,7 +786,7 @@ function showBrief(t){currentBrief=t||'';document.getElementById('briefText').te
   document.getElementById('briefCard').style.display=currentBrief?'block':'none'}
 function packActor(a){return{x:a.sx,y:a.sy,face:a.face,low:a.slow,lock:!!a.lock,route:a.route.map(p=>({x:p.x,y:p.y,mode:p.mode||'walk',aim:(p.aim===undefined?null:p.aim)}))}}
 function snapshot(brief){return{room:{x0:ROOM.x0,y0:ROOM.y0,w:ROOM.w,h:ROOM.h},
-  covers:covers.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,ang:c.ang||0,tall:c.tall!==false,lock:!!c.lock,shape:c.shape||'rect'})),
+  covers:covers.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,ang:c.ang||0,tall:c.tall!==false,lock:!!c.lock,shape:c.shape||'rect',prop:!!c.prop})),
   ops:ops.map(packActor),foes:foes.map(packActor),brief:brief!==undefined?brief:currentBrief}}
 function apply(d){if(d.room){ROOM.x0=(d.room.x0!==undefined?d.room.x0:1);ROOM.y0=(d.room.y0!==undefined?d.room.y0:1);ROOM.w=d.room.w;ROOM.h=d.room.h;fitScale()}
   covers=d.covers.map(c=>({...c}));
@@ -773,25 +803,38 @@ document.getElementById('loadSaved').onclick=()=>{const n=document.getElementByI
   if(!n)return;const st=readStore();if(st[n]){histPush();apply(st[n])}};
 document.getElementById('delSaved').onclick=()=>{const n=document.getElementById('saved').value;
   if(!n||!confirm('Видалити «'+n+'»?'))return;const st=readStore();delete st[n];writeStore(st);refreshList()};
-document.getElementById('exportScn').onclick=()=>{const st=readStore();st['(поточна площадка)']=snapshot();
-  const txt=JSON.stringify(st,null,2);
-  try{const a=document.createElement('a');
+function saveAsFile(txt){try{const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download='tsp-polygon.json';
     a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);
-    flash('файл завантажено')}catch(e){}
-  modal('Експорт сценаріїв','Якщо файл не завантажився — виділи весь текст, скопіюй і збережи в .json або надішли собі.',
-    txt,'Копіювати',()=>{const ta=document.getElementById('modalText');ta.select();
-      try{document.execCommand('copy');flash('скопійовано')}catch(e){flash('виділи та скопіюй вручну')}})};
+    flash('файл tsp-polygon.json — у теці «Завантаження»')}
+  catch(e){flash('файл не зберігся — копіюй текст')}}
+document.getElementById('exportScn').onclick=()=>{const st=readStore();st['(поточна площадка)']=snapshot();
+  const txt=JSON.stringify(st,null,2);
+  modal('Поділитися площадками',
+    'Натисни «Копіювати» і просто надішли цей текст у чат. Той, хто отримає, натисне «Імпорт» і вставить його. Файл не потрібен.',
+    txt,'📋 КОПІЮВАТИ',()=>copyText(document.getElementById('modalText').value),
+    '💾 Зберегти файлом',()=>saveAsFile(txt))};
+function doImport(v){const t=(v||'').trim();
+  if(!t){flash('поле порожнє — встав текст (Ctrl+V) або обери файл');return}
+  let inc;try{inc=JSON.parse(t)}catch(err){flash('це не схоже на площадку — копіюй текст повністю, від { до }');return}
+  if(!inc||typeof inc!=='object'){flash('текст не читається');return}
+  const st=readStore();Object.assign(st,inc);writeStore(st);
+  const names=Object.keys(inc);refreshList(names[0]);closeModal();
+  flash('додано площадок: '+names.length+' — обери у списку та натисни «Завантажити»')}
 document.getElementById('importScn').onclick=()=>{
-  modal('Імпорт сценаріїв','Встав сюди вміст файлу .json і натисни «Завантажити». Або обери файл кнопкою нижче.',
-    '','Завантажити',(v)=>{try{const inc=JSON.parse(v),st=readStore();Object.assign(st,inc);writeStore(st);
-      refreshList();document.getElementById('modal').style.display='none';flash('імпортовано: '+Object.keys(inc).length)}
-      catch(err){flash('текст не читається — це має бути JSON')}});
-  document.getElementById('fileIn').click()};
+  modal('Отримати площадки',
+    'Встав текст, який тобі надіслали (Ctrl+V), і натисни «Завантажити». Якщо тобі дали файл .json — кнопка «Обрати файл».',
+    '','✔ ЗАВАНТАЖИТИ',doImport,
+    '📁 Обрати файл',()=>document.getElementById('fileIn').click());
+  // якщо текст уже в буфері — вставимо самі, щоб нічого не робити руками
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    navigator.clipboard.readText().then(t=>{
+      if(t&&t.trim().charAt(0)==='{'&&!document.getElementById('modalText').value){
+        document.getElementById('modalText').value=t;flash('текст з буфера вставлено — натисни «Завантажити»')}
+    }).catch(()=>{})}};
 document.getElementById('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const fr=new FileReader();
-  fr.onload=()=>{try{const inc=JSON.parse(fr.result),st=readStore();Object.assign(st,inc);writeStore(st);refreshList();
-    document.getElementById('modal').style.display='none';flash('імпортовано: '+Object.keys(inc).length)}
-    catch(err){flash('не вдалося прочитати файл')}};
+  fr.onload=()=>doImport(fr.result);
+  fr.onerror=()=>flash('не вдалося прочитати файл');
   fr.readAsText(f);e.target.value=''};
 
 window.addEventListener('keydown',e=>{const k=(e.key||'').toLowerCase();
