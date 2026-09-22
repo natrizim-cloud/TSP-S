@@ -1,7 +1,21 @@
 <!DOCTYPE html>
+<!--
+  ============================================================================
+  ТСП «ЩИТ» — навчальна платформа тренажерів
+  © 2026 Шевченко Тихін Віталійович
+  кандидат юридичних наук, доцент, завідувач кафедри
+  тактико-спеціальної підготовки ННІ № 2 ХНУВС
+  ORCID: 0000-0003-0366-7217
+  Усі права застережено. Умови використання — файл LICENSE.
+  ============================================================================
+-->
+
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
+<meta name="author" content="Шевченко Тихін Віталійович">
+<meta name="copyright" content="© 2026 Шевченко Т. В. Усі права застережено">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23090c12'/><rect x='4' y='4' width='24' height='24' fill='%23f0f4f8'/><rect x='12' y='12' width='8' height='8' fill='%23cc0000'/></svg>">
 <title>Платформа тренувань · ТСП «ЩИТ» · v2.0</title>
@@ -646,7 +660,7 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
 
   </div>
 
-  <div class="menu-version">v2.0 · ТСП «ЩИТ» · 2026</div>
+  <div class="menu-version">v2.0 · ТСП «ЩИТ» · 2026<br>© Шевченко Т. В. · кафедра ТСП ННІ №2 ХНУВС · усі права застережено</div>
 </div>
 
 <!-- ===== SCREEN: OBSERVATION TABLE ===== -->
@@ -815,7 +829,6 @@ button:hover, button:active { background: #0d2040; color: var(--cyan); border-co
           font-weight:bold;color:#00ffaa;letter-spacing:2px;margin-bottom:6px;"></div>
         <div id="catch-results-analysis" style="font-family:'Courier New',monospace;font-size:9px;
           color:#3a6a8a;line-height:2;margin-bottom:10px;text-align:left;padding:0 8px;"></div>
-        <canvas id="catch-chart-clicks" style="width:100%;height:auto;display:block;margin-bottom:10px;border:1px solid #1a3050;border-radius:2px;"></canvas>
         <canvas id="catch-chart" style="width:100%;height:auto;display:block;margin-bottom:14px;border:1px solid #1a3050;border-radius:2px;"></canvas>
         <button onclick="catchLaunch(catchSessionMode)" style="font-size:11px;letter-spacing:2px;">↺ ЗНОВУ</button>
         <button onclick="goMenu()" style="font-size:11px;letter-spacing:2px;margin-left:8px;">← МЕНЮ</button>
@@ -1107,7 +1120,7 @@ function showTest(name) {
     name === 'motor-sniper' ? 'ЦІЛЬ · ТОЧНІСТЬ · v1.0' :
     name === 'motor-track' ? 'СУПРОВІД · КООРДИНАЦІЯ · v1.0' :
     name === 'motor-line' ? 'ЛІНІЯ · МОТОРИКА · v1.0' :
-    name === 'catch' ? 'ЗЛОВИТИ 33 · v1.1' :
+    name === 'catch' ? 'ЗЛОВИТИ 33 · v1.0' :
     name === 'neuro' ? 'НЕЙРОМЕРЕЖА · v1.0' : 'ТРЕНУВАЛЬНА ПЛАТФОРМА · v2.0';
   if (name === 'obs') { initObs(); }
   if (name === 'pilot') { initPilot(); }
@@ -1176,7 +1189,6 @@ function goMenu() {
   // Catch reset
   catchStop();
   catchPhase='idle'; catchInited=false; catchSessionTimes=[];
-  catchSessionCatchMs=[]; catchSessionErrors=[]; catchSessionFlags=[];
   var caOv=document.getElementById('catch-overlay'); if(caOv){caOv.style.display='flex';}
 
   // Prank reset
@@ -2770,34 +2782,7 @@ let catchSessionTarget = 1;
 let catchCurrentRound = 0;
 let catchLastFrame = 0;
 
-// --- v1.1: потайминг ловів, помилки, integrity ---
-let catchLastCatchAt = 0;      // мітка часу попереднього лову (для реакції)
-let catchLastTapT = 0;         // анти-дубль: час останнього дотику
-let catchRoundCatchMs = [];    // реакція на кожну ціль у поточному раунді (мс)
-let catchRoundErrors = 0;      // невірні/порожні кліки в поточному раунді
-let catchSessionCatchMs = [];  // усі реакції за сесію (пласким списком)
-let catchSessionErrors = [];   // помилки по раундах
-let catchSessionFlags = [];    // 'ok' | 'suspect' по раундах
-
 const CATCH_BASE_PPS = 180; // px/sec base speed
-
-function catchStd(arr){
-  if(arr.length<2) return 0;
-  var m=arr.reduce(function(a,b){return a+b;},0)/arr.length;
-  var v=arr.reduce(function(a,b){return a+Math.pow(b-m,2);},0)/arr.length;
-  return Math.sqrt(v);
-}
-// Евристика цілісності раунду: ловить автоклікер / хаотичні кліки
-function catchIntegrityFlag(ms, errs){
-  if(ms.length < 5) return 'ok';
-  var mean = ms.reduce(function(a,b){return a+b;},0)/ms.length;
-  var sd = catchStd(ms);
-  var cv = mean>0 ? sd/mean : 0;
-  var tooFast = ms.filter(function(x){return x < 120;}).length; // реакції швидше за людські
-  if (tooFast >= 3) return 'suspect';            // кілька суб-120мс ловів
-  if (cv < 0.08 && mean < 220) return 'suspect'; // машинно-рівні та швидкі інтервали
-  return 'ok';
-}
 
 function catchStop() {
   cancelAnimationFrame(catchAnimID); catchAnimID = null;
@@ -2811,7 +2796,6 @@ function catchLaunch(mode) {
   catchSessionMode = mode;
   catchSessionTarget = mode === 'x10' ? 10 : mode === 'x30' ? 30 : 1;
   catchSessionTimes = [];
-  catchSessionCatchMs = []; catchSessionErrors = []; catchSessionFlags = [];
   catchCurrentRound = 0;
   if (!catchInited) {
     showTest('catch');
@@ -2859,41 +2843,27 @@ function initCatch() {
   function onCatchClick(e) {
     if (catchPhase !== 'running') return;
     e.preventDefault();
-    var nowE = Date.now();
-    // синтетичний mouse-івент після дотику — ігноруємо (щоб не рахувати двічі)
-    if (e.type === 'mousedown' && nowE - catchLastTapT < 600) return;
-    if (e.type === 'touchstart') catchLastTapT = nowE;
     var p = getCanvasPos(e);
     var PAD = 6; // extra tolerance px
-    // Скануємо всі клітинки під кліком, з пріоритетом на поточну ціль
-    var underTarget = false, underWrongLive = false, underFound = false;
+    // First pass: check if target number is under click (draw order doesn't matter)
     for (var i = 0; i < catchSquares.length; i++) {
       var s = catchSquares[i];
+      if (s.found) continue;
       if (p.x >= s.x - PAD && p.x <= s.x + catchSZ + PAD &&
           p.y >= s.y - PAD && p.y <= s.y + catchSZ + PAD) {
-        if (!s.found && s.num === catchNext) underTarget = true;
-        else if (!s.found) underWrongLive = true;
-        else underFound = true;
+        if (s.num === catchNext) {
+          s.found = true;
+          catchNext++;
+          if (catchNext > CATCH_TOTAL) {
+            catchEndRound();
+          } else {
+            document.getElementById('target').innerHTML = 'ШУКАЙ: <span>' + catchNext + '</span>';
+          }
+          return;
+        }
       }
     }
-    if (underTarget) {
-      // вірний лов — записуємо час реакції
-      catchRoundCatchMs.push(nowE - catchLastCatchAt);
-      catchLastCatchAt = nowE;
-      for (var j = 0; j < catchSquares.length; j++) {
-        if (!catchSquares[j].found && catchSquares[j].num === catchNext) { catchSquares[j].found = true; break; }
-      }
-      catchNext++;
-      if (catchNext > CATCH_TOTAL) {
-        catchEndRound();
-      } else {
-        document.getElementById('target').innerHTML = 'ШУКАЙ: <span>' + catchNext + '</span>';
-      }
-      return;
-    }
-    if (underWrongLive) { catchRoundErrors++; return; } // клік по чужій (ще не спійманій) цілі
-    if (underFound) return;                             // повторний тап по вже спійманій — ігноруємо
-    catchRoundErrors++;                                 // клік по порожньому полю = промах
+    // Second pass: register wrong click (do nothing - just don't block)
   }
   catchCanvas.addEventListener('mousedown', onCatchClick);
   catchCanvas.addEventListener('touchstart', onCatchClick, { passive: false });
@@ -2974,9 +2944,6 @@ function catchTickCountdown() {
       catchPhase = 'running';
       catchNext = 1;
       catchStartTime = Date.now();
-      catchLastCatchAt = catchStartTime;
-      catchRoundCatchMs = [];
-      catchRoundErrors = 0;
       catchTimerID = setInterval(function() {
         catchElapsed = Date.now() - catchStartTime;
         document.getElementById('timer').textContent = fmt(catchElapsed);
@@ -3095,9 +3062,6 @@ function catchEndRound() {
   clearInterval(catchTimerID); catchTimerID = null;
   catchElapsed = Date.now() - catchStartTime;
   catchSessionTimes.push(catchElapsed);
-  for (var ri = 0; ri < catchRoundCatchMs.length; ri++) catchSessionCatchMs.push(catchRoundCatchMs[ri]);
-  catchSessionErrors.push(catchRoundErrors);
-  catchSessionFlags.push(catchIntegrityFlag(catchRoundCatchMs, catchRoundErrors));
   catchCurrentRound++;
 
   document.getElementById('timer').textContent = fmt(catchElapsed);
@@ -3209,33 +3173,14 @@ function catchShowResults() {
   var spread = Math.round((worst - best) / best * 100);
   analysis.push('⇕ РОЗКИД: ' + fmt(best) + ' — ' + fmt(worst) + ' (' + spread + '%)');
 
-  // --- v1.1: реакція на ціль ---
-  if (catchSessionCatchMs.length >= 3) {
-    var rMean = catchSessionCatchMs.reduce(function(a,b){return a+b;},0)/catchSessionCatchMs.length;
-    var rSd = catchStd(catchSessionCatchMs);
-    var rCv = rMean>0 ? Math.round(rSd/rMean*100) : 0;
-    analysis.push('⏱ РЕАКЦІЯ/ЦІЛЬ: ' + Math.round(rMean) + 'мс (SD ' + Math.round(rSd) + 'мс · CV ' + rCv + '%)');
-  }
-  // --- v1.1: помилки ---
-  var totalErr = catchSessionErrors.reduce(function(a,b){return a+b;},0);
-  analysis.push('✗ ПОМИЛКИ: ' + totalErr + ' за сесію (' + (Math.round(totalErr/n*10)/10) + ' / раунд)');
-  // --- v1.1: цілісність даних ---
-  var suspectRounds = catchSessionFlags.filter(function(f){return f==='suspect';}).length;
-  if (suspectRounds > 0) {
-    analysis.push('⚠ ВАЛІДНІСТЬ: ' + suspectRounds + ' з ' + n + ' раундів підозрілі (автоклікер / хаотичні кліки)');
-  } else {
-    analysis.push('✓ ВАЛІДНІСТЬ: сесія виглядає чистою');
-  }
-
   // === LIST ===
   var listHTML = times.map(function(t,i){
     var mark = t===best ? ' ★' : t===worst ? ' ▼' : '';
-    var flag = (catchSessionFlags[i]==='suspect') ? ' ⚠' : '';
-    var errN = catchSessionErrors[i]!==undefined ? catchSessionErrors[i] : 0;
+    var bar = '';
     return '<div style="display:flex;justify-content:space-between;gap:12px;">' +
-      '<span style="color:#2a5a7a;">#'+(i+1)+' <span style="color:#3a5a4a;">·'+errN+' пом.</span></span>' +
+      '<span style="color:#2a5a7a;">#'+(i+1)+'</span>' +
       '<span style="color:'+(t===best?'#00ffaa':t===worst?'#ff6666':'#4a8aaa')+'">' +
-      fmt(t)+mark+flag+'</span></div>';
+      fmt(t)+mark+'</span></div>';
   }).join('');
 
   document.getElementById('catch-results-list').innerHTML = listHTML;
@@ -3318,10 +3263,6 @@ function catchShowResults() {
   ctx2.fillStyle='#4a8aaa'; ctx2.font='9px Courier New'; ctx2.textAlign='center';
   ctx2.fillText('РЕЗУЛЬТАТИ ПО РАУНДАХ (помаранчева — тренд)', CW/2, PAD.top-8);
 
-  // --- v1.1: графік часу між ловами ---
-  catchDrawClicksChart();
-  document.getElementById('catch-chart').style.display = (n >= 2) ? 'block' : 'none';
-
   // Show overlay
   document.getElementById('catch-break-wrap').style.display='none';
   document.getElementById('catch-countdown-num').style.display='none';
@@ -3335,75 +3276,10 @@ function catchShowResults() {
   document.getElementById('target').textContent='✓ ЗАВЕРШЕНО';
 }
 
-function catchDrawClicksChart() {
-  var data = catchSessionCatchMs;
-  var el = document.getElementById('catch-chart-clicks');
-  var CW = 460, CH = 190;
-  el.width = CW; el.height = CH;
-  var ctx = el.getContext('2d');
-  ctx.fillStyle = '#090c12'; ctx.fillRect(0,0,CW,CH);
-  if (!data || data.length < 2) {
-    ctx.fillStyle='#3a6a8a'; ctx.font='10px Courier New'; ctx.textAlign='center';
-    ctx.fillText('Замало даних для графіка', CW/2, CH/2);
-    return;
-  }
-  var PAD = {top:24,right:14,bottom:28,left:52};
-  var gW = CW-PAD.left-PAD.right, gH = CH-PAD.top-PAD.bottom;
-  var n = data.length;
-  var maxV = Math.max.apply(null, data) * 1.05 || 1;
-  var mean = data.reduce(function(a,b){return a+b;},0)/n;
-  // grid
-  ctx.strokeStyle='#1a3050'; ctx.lineWidth=1;
-  for (var gi=0;gi<=4;gi++){
-    var gy=PAD.top+gH-gi/4*gH;
-    ctx.beginPath(); ctx.moveTo(PAD.left,gy); ctx.lineTo(PAD.left+gW,gy); ctx.stroke();
-    ctx.fillStyle='#3a6a8a'; ctx.font='8px Courier New'; ctx.textAlign='right';
-    ctx.fillText(Math.round(maxV*gi/4)+'мс', PAD.left-4, gy+3);
-  }
-  // round separators (кожні CATCH_TOTAL ловів)
-  if (n > CATCH_TOTAL) {
-    ctx.strokeStyle='rgba(150,110,0,0.35)'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
-    for (var bnd=CATCH_TOTAL; bnd<n; bnd+=CATCH_TOTAL){
-      var bx=PAD.left+((bnd-0.5)/(n-1))*gW;
-      ctx.beginPath(); ctx.moveTo(bx,PAD.top); ctx.lineTo(bx,PAD.top+gH); ctx.stroke();
-    }
-    ctx.setLineDash([]);
-  }
-  // mean line
-  var my=PAD.top+gH-(mean/maxV)*gH;
-  ctx.strokeStyle='#2a6a4a'; ctx.setLineDash([4,4]); ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(PAD.left,my); ctx.lineTo(PAD.left+gW,my); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle='#2a8a5a'; ctx.font='8px Courier New'; ctx.textAlign='left';
-  ctx.fillText('сер. '+Math.round(mean)+'мс', PAD.left+4, my-3);
-  // area
-  ctx.beginPath(); ctx.moveTo(PAD.left,PAD.top+gH);
-  for (var i=0;i<n;i++){ var x=PAD.left+(i/(n-1))*gW, y=PAD.top+gH-(data[i]/maxV)*gH; ctx.lineTo(x,y); }
-  ctx.lineTo(PAD.left+gW,PAD.top+gH); ctx.closePath();
-  var grad=ctx.createLinearGradient(0,PAD.top,0,PAD.top+gH);
-  grad.addColorStop(0,'rgba(0,220,255,0.22)'); grad.addColorStop(1,'rgba(0,80,120,0.03)');
-  ctx.fillStyle=grad; ctx.fill();
-  // line
-  ctx.strokeStyle='#00c8f0'; ctx.lineWidth=1.5; ctx.beginPath();
-  for (var li=0;li<n;li++){ var lx=PAD.left+(li/(n-1))*gW, ly=PAD.top+gH-(data[li]/maxV)*gH; li===0?ctx.moveTo(lx,ly):ctx.lineTo(lx,ly); }
-  ctx.stroke();
-  // 3 найповільніші = провали уваги
-  var slow=data.map(function(v,i){return {v:v,i:i};}).sort(function(a,b){return b.v-a.v;}).slice(0,3);
-  slow.forEach(function(it){
-    var x=PAD.left+(it.i/(n-1))*gW, y=PAD.top+gH-(it.v/maxV)*gH;
-    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle='#ff4444'; ctx.fill();
-    ctx.fillStyle='#ff8888'; ctx.font='bold 8px Courier New'; ctx.textAlign='center';
-    ctx.fillText('#'+(it.i+1), x, y-6);
-  });
-  ctx.fillStyle='#4a8aaa'; ctx.font='9px Courier New'; ctx.textAlign='center';
-  ctx.fillText('ЧАС МІЖ ЛОВАМИ (мс) · червоні = провали уваги', CW/2, PAD.top-8);
-}
-
 function catchReset() {
   catchStop();
   catchPhase = 'idle';
   catchSessionTimes = [];
-  catchSessionCatchMs = []; catchSessionErrors = []; catchSessionFlags = [];
   catchCurrentRound = 0;
   document.getElementById('timer').textContent = '00.00с';
   document.getElementById('timer').className = '';
