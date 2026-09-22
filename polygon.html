@@ -116,14 +116,30 @@
           <button id="stStand" class="sm on">стоячи<br><span style="font-size:9.5px;opacity:.7">1.5 м/с</span></button>
           <button id="stCrouch" class="sm">на коліні<br><span style="font-size:9.5px;opacity:.7">0.75 м/с</span></button>
         </div>
-        <h2 style="margin-top:11px">ТЕМП ТОЧКИ МАРШРУТУ</h2>
+        <h2 style="margin-top:11px">ТЕМП ДЛЯ НОВИХ ТОЧОК</h2>
         <div class="grid2">
           <button id="mWalk" class="sm on">крок</button>
           <button id="mSprint" class="sm">спринт<br><span style="font-size:9.5px;opacity:.7">4.5 · без вогню</span></button>
         </div>
+        <div id="ptCard" style="display:none;margin-top:10px;padding:9px;border:1px solid #2d3a4a;border-radius:8px;background:#121821">
+          <h2 style="margin:0 0 7px;color:#f0c583">ТОЧКА <span id="ptNum"></span></h2>
+          <div class="grid2">
+            <button id="ptWalk" class="sm">крок</button>
+            <button id="ptSprint" class="sm">спринт</button>
+          </div>
+          <h2 style="margin:9px 0 5px">ЗУПИНКА НА ТОЧЦІ</h2>
+          <div class="grid3">
+            <button id="ptHold0" class="sm">без</button>
+            <button id="ptHold3" class="sm">⏸ 3 с</button>
+            <button id="ptHold6" class="sm">⏸ 6 с</button>
+          </div>
+          <button id="ptAimBtn" class="sm" style="width:100%;margin-top:6px">🎯 дивитись у точку</button>
+          <button id="ptDel" class="sm danger" style="width:100%;margin-top:5px">✕ видалити точку</button>
+          <p class="hint" style="margin-top:6px">На зупинці боєць стоїть і може розвернутись <b>на всі 360°</b> — так робиться розворот у тил. У русі — лише ±140°.</p>
+        </div>
         <button id="clrAll" class="sm danger" style="width:100%;margin-top:6px">стерти всі маршрути</button>
         <button id="wipeAll" class="sm danger" style="width:100%;margin-top:5px">⌦ очистити площадку</button>
-        <p class="hint" id="routeHint"><b>Положення</b> — властивість самої фігури: обрав і натиснув, вона одразу присідає чи встає, і так іде весь сценарій. На коліні — 0.75 м/с, і низькі укриття ховають.<br><b>Темп</b> — записується в точку маршруту, яку ставиш наступною. Спринт піднімає з коліна, вогню на ньому немає, огляд 30°.<br>Жовта ручка на точці — куди тримати сектор (±140° від руху). Shift-клік — знову вперед.</p>
+        <p class="hint" id="routeHint"><b>Положення</b> — властивість самої фігури: обрав і натиснув, вона одразу присідає чи встає, і так іде весь сценарій. На коліні — 0.75 м/с, і низькі укриття ховають.<br><b>Темп</b> — записується в точку маршруту, яку ставиш наступною. Спринт піднімає з коліна, вогню на ньому немає, огляд 30°.<br>Жовта ручка на точці — куди тримати сектор (±140° від руху). Shift-клік — знову вперед.<br><b>Клікни по точці маршруту</b> — відкриється її картка: темп, зупинка, ціль для прицілювання.</p>
       </div>
       <div class="card">
         <h2>СТОРОНИ</h2>
@@ -179,7 +195,8 @@ function updUI(){const r=cv.getBoundingClientRect();
 const OBS_HALF=45, SPRINT_OBS=15, FIRE_HALF=3.5, FIRE_R=39, SIGHT=54;
 const EXPOSE=1.0;                       // с у секторі вогню до ураження
 const V_WALK=1.5, V_CROUCH=0.75, V_SPRINT=4.5, ACC=5.0, DEC=7.0;
-const CRASH_STUN=1.2, KILL_NEAR=1.0, AIM_MAX=140, TURN_RATE=260, LOW_SHADOW=1.0;   // сектор можна тримати до ±140° від напрямку руху
+const CRASH_STUN=1.2, KILL_NEAR=1.0, AIM_MAX=140, TURN_RATE=260, LOW_SHADOW=1.0, MAX_RUN=120;
+let runT=0;   // сектор можна тримати до ±140° від напрямку руху
 let pops=[];
 
 function m2p(x,y){return{x:OFF.x+PAN.x+(x-ROOM.x0)*SCALE,y:OFF.y+PAN.y+(y-ROOM.y0)*SCALE}}
@@ -203,7 +220,7 @@ function histRedo(){if(!redoStack.length)return;
   const st=redoStack.pop();histReady=false;apply(JSON.parse(st));histReady=true;flash('повернуто');syncHistBtns()}
 function flash(t){const v=document.getElementById('verdict');const old=v.textContent;
   v.textContent=t;setTimeout(()=>{if(v.textContent===t)v.textContent=old},900)}
-let selActor=null, selCover=null, ptMode='walk', lastClick=0, lastHit=null;  // ptMode: walk | sprint
+let selActor=null, selCover=null, selPt=null, aimPick=false, ptMode='walk', lastClick=0, lastHit=null;  // ptMode: walk | sprint
 let tool='edit', secMode=0, ruler=null;   // tool: edit|pan|ruler; secMode 0=всі 1=обрана 2=немає
 
 function mkActor(x,y,face,side){return{x,y,face,side,low:false,alive:true,
@@ -214,9 +231,9 @@ function initScene(){
   covers=[{x:11,y:8,w:5,h:.8,ang:0,tall:true,shape:'rect'},{x:8,y:5,w:1.6,h:1.6,ang:0,tall:true,shape:'ellipse'},{x:15,y:12,w:4,h:.8,ang:-28,tall:false,shape:'rect'}];
   currentBrief='';showBrief('');resetRun();refreshChips()}
 function all(){return ops.concat(foes)}
-function resetRun(){playing=false;events=[];pops=[];
+function resetRun(){playing=false;events=[];pops=[];runT=0;
   all().forEach(a=>{a.x=a.sx;a.y=a.sy;a.alive=true;a.seg=0;a.speed=0;a.stun=0;a.hurt=0;a.expo={};a.done=false;
-    a.low=a.slow;a.track=null;a.desiredAim=null;a.slide=0;a.detour=null;a.saidDetour=0;a.mode=a.route.length>1?(a.route[1].mode||'walk'):'walk';
+    a.low=a.slow;a.track=null;a.desiredAim=null;a.slide=0;a.detour=null;a.saidDetour=0;a.holdT=0;a.saidHold=0;a.mode=a.route.length>1?(a.route[1].mode||'walk'):'walk';
     if(a.route.length>1)a.face=bearing(a.route[0],a.route[1])});
   setVerdict('','Натисни «Програти».');document.getElementById('log').innerHTML=''}
 function setVerdict(cls,txt){const v=document.getElementById('verdict');v.className='verdict '+cls;v.textContent=txt}
@@ -348,6 +365,12 @@ function routeRemain(a){let s=dist(a,a.route[a.seg+1]);
 function advance(a,dt){
   if(!a.alive)return;
   if(a.stun>0){a.stun-=dt;a.speed=0;return}
+  // зупинка на точці: стоїть, і ствол вільний на всі 360°
+  if(a.holdT>0){a.holdT-=dt;a.speed=0;a.mode='walk';
+    const p=a.route[a.seg];
+    if(p)a.desiredAim=p.aimAt?bearing(a,p.aimAt):((p.aim===undefined||p.aim===null)?a.desiredAim:p.aim);
+    if(a.holdT<=0)popup(a,'рушив','#8fd3f0');
+    return}
   if(a.route.length<2||a.seg>=a.route.length-1){a.speed=0;a.done=true;return}
   if(inCover(a.x,a.y)){const q=pushOut(a.x,a.y,.3);a.x=q.x;a.y=q.y;a.detour=null}
   const tgt=a.route[a.seg+1];a.mode=(tgt.mode==='sprint')?'sprint':'walk';
@@ -358,8 +381,10 @@ function advance(a,dt){
     if(rem<=brake)a.speed=Math.max(.6,a.speed-DEC*dt);else a.speed=Math.min(vmax,a.speed+ACC*dt)}
   else a.speed=vmax;
   const want=bearing(a,tgt);
-  let aim=(tgt.aim===undefined||tgt.aim===null)?want:tgt.aim;
-  const rel=norm(aim-want);if(Math.abs(rel)>AIM_MAX)aim=want+Math.sign(rel)*AIM_MAX;
+  let aim;
+  if(tgt.aimAt)aim=bearing(a,tgt.aimAt);                       // тримає ціль у прицілі на ходу
+  else aim=(tgt.aim===undefined||tgt.aim===null)?want:tgt.aim;
+  const rel=norm(aim-want);if(Math.abs(rel)>AIM_MAX)aim=want+Math.sign(rel)*AIM_MAX;   // фізична межа
   a.desiredAim=aim;
   const st=a.speed*dt;
   // якщо прямий шлях перекрито — рахуємо обхід і йдемо ним
@@ -383,13 +408,16 @@ function advance(a,dt){
     a.done=true;a.speed=0;addEvent(label(a)+': шлях перекрито — зупинка.','warn');return}
   a.x=nx;a.y=ny;
   if(nd<=st+1e-6){if(a.detour&&a.detour.length)a.detour.shift();
-    if((!a.detour||!a.detour.length)&&dist(a,tgt)<=st+1e-6){a.seg++;a.detour=null;a.saidDetour=0}}
+    if((!a.detour||!a.detour.length)&&dist(a,tgt)<=st+1e-6){a.seg++;a.detour=null;a.saidDetour=0;
+      const at=a.route[a.seg];
+      if(at&&at.hold>0){a.holdT=at.hold;a.speed=0;popup(a,'зупинка '+at.hold+' с','#f0c583')}}}
 }
 function visibleFoe(a){let best=null,bd=1e9;
   for(const t of all()){if(t.side===a.side||!t.alive)continue;
+    const d=dist(a,t);if(d>SIGHT)continue;                       // далі дальності спостереження не бачить
     if(Math.abs(norm(bearing(a,t)-a.face))>obsHalf(a))continue;
     if(!losClear(a,t,a.low,t.low))continue;
-    const d=dist(a,t);if(d<bd){bd=d;best=t}}
+    if(d<bd){bd=d;best=t}}
   return best}
 function updateAim(a,dt){
   if(!a.alive||a.stun>0)return;
@@ -419,10 +447,17 @@ function step(dt){
         addEvent(label(sh)+' вийшов упритул до '+label(t).toLowerCase()+' — знищено.',sh.side==='op'?'stop':'kill')}}}
   A.forEach(a=>advance(a,dt));
   A.forEach(a=>updateAim(a,dt));
-  // сценарій триває, доки в живих є хтось, хто ще рухається
+  // сценарій триває, доки хтось іде АБО доки триває вогневий контакт
   const liveA=A.filter(a=>a.alive);
   if(!A.length)return;
-  if(!liveA.length||liveA.every(a=>a.done)){playing=false;
+  runT+=dt;
+  const moving=liveA.some(a=>!a.done);
+  let contact=false;
+  for(const a of liveA){if(contact)break;
+    for(const t of liveA){if(t.side===a.side)continue;
+      if(covers_(a,t)){contact=true;break}
+      if(canFire(a)&&dist(a,t)<=SIGHT&&Math.abs(norm(bearing(a,t)-a.face))<=obsHalf(a)&&losClear(a,t,a.low,t.low)){contact=true;break}}}
+  if(!liveA.length||((!moving&&!contact)||runT>MAX_RUN)){playing=false;
     const oL=ops.filter(o=>!o.alive).length,fL=foes.filter(f=>!f.alive).length;
     const txt='Втрати — свої: '+oL+' з '+ops.length+', противник: '+fL+' з '+foes.length+'.';
     if(ops.length&&oL===ops.length)setVerdict('bad',txt+' Свої знищені повністю.');
@@ -464,8 +499,11 @@ function drawCovers(){covers.forEach(r=>{const c=m2p(covCenter(r).x,covCenter(r)
     ctx.strokeStyle='#7d8b9c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(rp.x,rp.y);ctx.stroke();
     ctx.fillStyle='#f0c583';ctx.beginPath();ctx.arc(rp.x,rp.y,6.5*UI,0,7);ctx.fill()}})}
 function modeDash(m){return m==='sprint'?[10,4]:m==='crouch'?[2,4]:[6,5]}
+function freeTurn(p){return !!(p&&p.hold>0)}       // на зупинці розворот вільний
 function ptAim(a,i){const p=a.route[i],base=bearing(a.route[i-1],p);
+  if(p.aimAt)return bearing(p,p.aimAt);
   let aim=(p.aim===undefined||p.aim===null)?base:p.aim;
+  if(freeTurn(p))return aim;
   const rel=norm(aim-base);if(Math.abs(rel)>AIM_MAX)aim=base+Math.sign(rel)*AIM_MAX;return aim}
 function aimHandlePos(a,i){const p=a.route[i],ang=ptAim(a,i),L=Math.max(1.6,(28*UI)/SCALE);
   return{x:p.x+Math.cos(rad(ang))*L,y:p.y+Math.sin(rad(ang))*L}}
@@ -475,9 +513,21 @@ function drawRoutes(){all().forEach(a=>{if(a.route.length<2&&a!==selActor)return
     ctx.strokeStyle='rgba('+col+','+(sel?.8:.4)+')';ctx.lineWidth=sel?2.4:1.6;
     ctx.setLineDash(modeDash(a.route[i+1].mode||'walk'));
     ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([])}
-  a.route.forEach((p,i)=>{const q=m2p(p.x,p.y);ctx.fillStyle='rgba('+col+','+(sel?.85:.45)+')';
-    ctx.beginPath();ctx.arc(q.x,q.y,(sel?5.5:4.5)*UI,0,7);ctx.fill();
-    if(sel){ctx.fillStyle='#0e1116';ctx.font='bold '+Math.round(9*UI)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,q.x,q.y)}});
+  a.route.forEach((p,i)=>{const q=m2p(p.x,p.y),isSelPt=(sel&&i===selPt);
+    if(p.hold>0){ctx.strokeStyle='#f0c583';ctx.lineWidth=2*UI;
+      ctx.beginPath();ctx.arc(q.x,q.y,9*UI,0,7);ctx.stroke()}
+    ctx.fillStyle=isSelPt?'#f0c583':'rgba('+col+','+(sel?.85:.45)+')';
+    ctx.beginPath();ctx.arc(q.x,q.y,(isSelPt?7:(sel?5.5:4.5))*UI,0,7);ctx.fill();
+    if(sel){ctx.fillStyle='#0e1116';ctx.font='bold '+Math.round(9*UI)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,q.x,q.y)}
+    if(p.hold>0){ctx.fillStyle='#f0c583';ctx.font='bold '+Math.round(9*UI)+'px system-ui';
+      ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('⏸'+p.hold+'с',q.x,q.y-11*UI)}
+    if(p.aimAt&&sel){const t=m2p(p.aimAt.x,p.aimAt.y);
+      ctx.strokeStyle='rgba(240,197,131,.75)';ctx.lineWidth=1.3*UI;ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.moveTo(q.x,q.y);ctx.lineTo(t.x,t.y);ctx.stroke();ctx.setLineDash([]);
+      ctx.strokeStyle='#f0c583';ctx.lineWidth=2*UI;
+      ctx.beginPath();ctx.arc(t.x,t.y,7*UI,0,7);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(t.x-10*UI,t.y);ctx.lineTo(t.x+10*UI,t.y);
+      ctx.moveTo(t.x,t.y-10*UI);ctx.lineTo(t.x,t.y+10*UI);ctx.stroke()}});
   if(sel&&!playing)for(let i=1;i<a.route.length;i++){const p=m2p(a.route[i].x,a.route[i].y),
     h=aimHandlePos(a,i),hp=m2p(h.x,h.y),custom=(a.route[i].aim!==undefined&&a.route[i].aim!==null);
     ctx.strokeStyle=custom?'rgba(240,197,131,.9)':'rgba(240,197,131,.4)';ctx.lineWidth=1.4;
@@ -553,6 +603,7 @@ cv.addEventListener('pointerdown',ev=>{ev.preventDefault();updUI();const pos=evP
   if(tool==='pan'||ev.ctrlKey||ev.metaKey||ev.button===1){dragging={t:'pan',px:pos.px,py:pos.py};return}
   if(tool==='ruler'){if(!ruler||ruler.b){ruler={a:{x:pos.mx,y:pos.my},b:null}}
     else{ruler.b={x:pos.mx,y:pos.my}}return}
+  if(playing){flash('під час програвання редагування вимкнено — натисни «⏹ Стоп»');return}
   const h=hitActor(pos);
   if(h){ // подвійний клік — стійка
     if(h.t==='body'&&lastHit===h.a&&now-lastClick<380){histPush();h.a.slow=!h.a.slow;h.a.low=h.a.slow;lastHit=null;resetRun();return}
@@ -562,6 +613,13 @@ cv.addEventListener('pointerdown',ev=>{ev.preventDefault();updUI();const pos=evP
     try{cv.setPointerCapture(ev.pointerId)}catch(e){}
     histPush();dragging={t:h.t,a:h.a};return}
   lastHit=null;
+  // режим «дивитись у точку»: наступний клік задає ціль для обраної точки
+  if(aimPick&&selActor&&selPt!==null&&selPt>0){
+    histPush();selActor.route[selPt].aimAt={x:pos.mx,y:pos.my};selActor.route[selPt].aim=null;
+    aimPick=false;resetRun();refreshPtCard();flash('ціль задано — боєць триматиме її у прицілі');return}
+  // клік по точці маршруту обраної фігури — вибрати її
+  if(selActor)for(let i=0;i<selActor.route.length;i++){const q=m2p(selActor.route[i].x,selActor.route[i].y);
+    if(Math.hypot(pos.px-q.x,pos.py-q.y)<14*UI){selPt=i;refreshPtCard();return}}
   if(selActor&&!playing)for(let i=1;i<selActor.route.length;i++){const h=aimHandlePos(selActor,i),hp=m2p(h.x,h.y);
     if(Math.hypot(pos.px-hp.x,pos.py-hp.y)<15*UI){
       histPush();if(ev.shiftKey){selActor.route[i].aim=null;resetRun();return}
@@ -577,7 +635,8 @@ cv.addEventListener('pointerdown',ev=>{ev.preventDefault();updUI();const pos=evP
   // клік по полю — точка маршруту обраної фігури
   if(selActor&&pos.mx>ROOM.x0&&pos.mx<ROOM.x0+ROOM.w&&pos.my>ROOM.y0&&pos.my<ROOM.y0+ROOM.h){
     histPush();if(!selActor.route.length)selActor.route.push({x:selActor.sx,y:selActor.sy,mode:'walk'});
-    const q=pushOut(pos.mx,pos.my);selActor.route.push({x:q.x,y:q.y,mode:ptMode});resetRun()}});
+    const q=pushOut(pos.mx,pos.my);selActor.route.push({x:q.x,y:q.y,mode:ptMode,hold:0,aimAt:null});
+    selPt=selActor.route.length-1;resetRun();refreshPtCard()}});
 cv.addEventListener('pointermove',ev=>{if(!dragging)return;ev.preventDefault();const pos=evPos(ev);
   if(dragging.t==='pan'){PAN.x+=pos.px-dragging.px;PAN.y+=pos.py-dragging.py;dragging.px=pos.px;dragging.py=pos.py;return}
   if(tool==='ruler'&&ruler&&!ruler.b)return;
@@ -604,7 +663,9 @@ cv.addEventListener('pointermove',ev=>{if(!dragging)return;ev.preventDefault();c
     nw=Math.max(.5,Math.min(30,nw));nh=Math.max(.5,Math.min(30,nh));
     const c=covCenter(r);r.w=nw;r.h=nh;r.x=c.x-nw/2;r.y=c.y-nh/2}
   else if(dragging.t==='aim'){const a=dragging.a,p=a.route[dragging.i];
+    p.aimAt=null;                                  // ручку крутять вручну — ціль знімається
     const base=bearing(a.route[dragging.i-1],p);let ang=deg(Math.atan2(pos.my-p.y,pos.mx-p.x));
+    if(freeTurn(p)){p.aim=ang;return}
     const rel=norm(ang-base);p.aim=Math.abs(rel)>AIM_MAX?base+Math.sign(rel)*AIM_MAX:ang}
   else if(dragging.t==='rotate'){const r=covers[dragging.i],c=covCenter(r);
     r.ang=deg(Math.atan2(pos.my-c.y,pos.mx-c.x))-90;
@@ -636,7 +697,7 @@ function mkRow(cls,nm,on,onSel,btns){const w=document.createElement('div');w.cla
   const b=document.createElement('button');b.className='sm nm'+(on?' on':'');b.textContent=nm;b.onclick=onSel;w.appendChild(b);
   btns.forEach(e=>{const x=document.createElement('button');x.className='sm ic'+(e.cls||'')+(e.on?' on':'');
     x.textContent=e.txt;x.title=e.title||'';x.onclick=e.fn;w.appendChild(x)});return w}
-function clearRoute(a){if(!a.route.length)return;histPush();a.route=[];resetRun();refreshChips()}
+function clearRoute(a){if(!a.route.length)return;histPush();a.route=[];selPt=null;resetRun();refreshChips();refreshPtCard()}
 const TPL_KEY='tsp_templates';
 const BASE_TPL=[
   {n:'бочка',w:.6,h:.6,shape:'ellipse',tall:true},
@@ -694,7 +755,36 @@ function syncModeBtns(){
 function setPtMode(m){ptMode=m;syncModeBtns()}
 function setStance(low){if(!selActor){flash('спершу обери фігуру');return}
   histPush();selActor.slow=low;selActor.low=low;resetRun();syncModeBtns();refreshChips()}
-function pickActor(a){selActor=a;selCover=null;syncModeBtns();refreshChips()}
+function pickActor(a){selActor=a;selCover=null;selPt=null;aimPick=false;syncModeBtns();refreshChips();refreshPtCard()}
+function refreshPtCard(){const card=document.getElementById('ptCard');
+  const ok=selActor&&selPt!==null&&selPt>0&&selPt<selActor.route.length;
+  card.style.display=ok?'':'none';if(!ok)return;
+  const p=selActor.route[selPt];
+  document.getElementById('ptNum').textContent=selPt+' з '+(selActor.route.length-1);
+  document.getElementById('ptWalk').classList.toggle('on',(p.mode||'walk')!=='sprint');
+  document.getElementById('ptSprint').classList.toggle('on',p.mode==='sprint');
+  document.getElementById('ptHold0').classList.toggle('on',!(p.hold>0));
+  document.getElementById('ptHold3').classList.toggle('on',p.hold===3);
+  document.getElementById('ptHold6').classList.toggle('on',p.hold===6);
+  const ab=document.getElementById('ptAimBtn');
+  ab.classList.toggle('on',aimPick||!!p.aimAt);
+  ab.textContent=aimPick?'⬤ клікни, куди дивитись…':(p.aimAt?'🎯 ціль задано — зняти':'🎯 дивитись у точку')}
+function setPtField(k,v){if(!selActor||selPt===null)return;histPush();
+  selActor.route[selPt][k]=v;resetRun();refreshPtCard();refreshChips()}
+document.getElementById('ptWalk').onclick=()=>setPtField('mode','walk');
+document.getElementById('ptSprint').onclick=()=>setPtField('mode','sprint');
+document.getElementById('ptHold0').onclick=()=>setPtField('hold',0);
+document.getElementById('ptHold3').onclick=()=>setPtField('hold',3);
+document.getElementById('ptHold6').onclick=()=>setPtField('hold',6);
+document.getElementById('ptAimBtn').onclick=()=>{if(!selActor||selPt===null)return;
+  const p=selActor.route[selPt];
+  if(p.aimAt){histPush();p.aimAt=null;aimPick=false;resetRun()}
+  else aimPick=!aimPick;
+  refreshPtCard();if(aimPick)flash('тепер клікни по площадці — туди він дивитиметься')};
+document.getElementById('ptDel').onclick=()=>{if(!selActor||selPt===null||selPt<1)return;
+  histPush();selActor.route.splice(selPt,1);
+  if(selActor.route.length<2)selActor.route=[];
+  selPt=null;resetRun();refreshPtCard();refreshChips()};
 document.getElementById('mWalk').onclick=()=>setPtMode('walk');
 document.getElementById('mSprint').onclick=()=>setPtMode('sprint');
 document.getElementById('stStand').onclick=()=>setStance(false);
@@ -784,7 +874,8 @@ function refreshList(sel){const st=readStore(),el=document.getElementById('saved
   if(sel)el.value=sel}
 function showBrief(t){currentBrief=t||'';document.getElementById('briefText').textContent=currentBrief;
   document.getElementById('briefCard').style.display=currentBrief?'block':'none'}
-function packActor(a){return{x:a.sx,y:a.sy,face:a.face,low:a.slow,lock:!!a.lock,route:a.route.map(p=>({x:p.x,y:p.y,mode:p.mode||'walk',aim:(p.aim===undefined?null:p.aim)}))}}
+function packActor(a){return{x:a.sx,y:a.sy,face:a.face,low:a.slow,lock:!!a.lock,route:a.route.map(p=>({x:p.x,y:p.y,mode:p.mode||'walk',aim:(p.aim===undefined?null:p.aim),
+    aimAt:(p.aimAt?{x:p.aimAt.x,y:p.aimAt.y}:null),hold:(p.hold||0)}))}}
 function snapshot(brief){return{room:{x0:ROOM.x0,y0:ROOM.y0,w:ROOM.w,h:ROOM.h},
   covers:covers.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,ang:c.ang||0,tall:c.tall!==false,lock:!!c.lock,shape:c.shape||'rect',prop:!!c.prop})),
   ops:ops.map(packActor),foes:foes.map(packActor),brief:brief!==undefined?brief:currentBrief}}
@@ -792,9 +883,11 @@ function apply(d){if(d.room){ROOM.x0=(d.room.x0!==undefined?d.room.x0:1);ROOM.y0
   covers=d.covers.map(c=>({...c}));
   const un=(o,side)=>{const a=mkActor(o.x,o.y,o.face,side);a.slow=!!o.low;a.lock=!!o.lock;
     if((o.route||[]).some(p=>p.mode==='crouch'))a.slow=true;      // сумісність зі старими сценаріями
-    a.low=a.slow;a.route=(o.route||[]).map(p=>({...p,mode:(p.mode==='sprint')?'sprint':'walk'}));return a};
+    a.low=a.slow;a.route=(o.route||[]).map(p=>({...p,mode:(p.mode==='sprint')?'sprint':'walk',
+      hold:(p.hold||0),aimAt:(p.aimAt?{x:p.aimAt.x,y:p.aimAt.y}:null)}));return a};
   ops=d.ops.map(o=>un(o,'op'));foes=(d.foes||[]).map(o=>un(o,'foe'));
-  selActor=null;showBrief(d.brief);resetRun();refreshChips()}
+  selActor=null;selPt=null;aimPick=false;showBrief(d.brief);resetRun();refreshChips();
+  if(typeof refreshPtCard==='function')refreshPtCard()}
 document.getElementById('saveScn').onclick=()=>{const n=prompt('Назва сценарію:');if(!n)return;
   const b=prompt('Пояснення для курсантів (можна порожнім):',currentBrief||'')||'';
   const st=readStore();st[n]=snapshot(b);const ok=writeStore(st);showBrief(b);refreshList(n);
