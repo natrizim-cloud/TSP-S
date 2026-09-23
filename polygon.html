@@ -10,6 +10,9 @@
   ННІ № 2 Харківського національного університету внутрішніх справ
   ORCID: 0000-0003-0366-7217
 
+  ВЕРСІЯ: 1.4   ДАТА РЕДАКЦІЇ: 23.09.2026
+  Контрольна сума цієї редакції — файл ВЕРСІЇ.md
+
   Усі права застережено. Умови використання — файл LICENSE.
   Безоплатно дозволено використання в освітньому процесі закладів освіти
   МВС України за умови збереження зазначення авторства.
@@ -77,7 +80,8 @@
 <div class="wrap">
   <h1>Тактичний полігон</h1>
   <p class="sub">Побудуй площадку, розстав обидві сторони, задай кожному маршрут і режим руху — і програй.</p>
-  <p style="font-size:10.5px;color:#5a6673;margin:-8px 0 12px">© 2026 Шевченко Т.&nbsp;В. · кафедра тактико-спеціальної підготовки ННІ&nbsp;№2 ХНУВС · усі права застережено</p>
+  <p style="font-size:10.5px;color:#5a6673;margin:-8px 0 12px">
+    <b id="verTag" style="color:#8fd3f0">v1.4</b> · © 2026 Шевченко Т.&nbsp;В. · кафедра тактико-спеціальної підготовки ННІ&nbsp;№2 ХНУВС · усі права застережено</p>
   <div class="layout">
     <div class="stage">
       <canvas id="cv" width="1000" height="700"></canvas>
@@ -113,7 +117,8 @@
         <span><span class="sw" style="background:#26303c;border:1px dashed #5a6a7e"></span>укриття по пояс</span>
         <span>мале коло = на коліні</span>
         <span>подвійний клік по фігурі — стоячи / коліно</span>
-        <span>жовта ручка — поворот перешкоди (Shift — по 15°)</span>
+        <span><b>Shift</b> + кутик — змінити розмір перешкоди</span>
+        <span>жовта ручка — поворот (Shift — по 15°)</span>
         <span>стрілки «поле» розширюють свій бік, Shift — звужують</span>
         <span>кнопки «Скасувати / Повернути» або Ctrl+Z / Ctrl+Y</span>
       </div>
@@ -140,6 +145,10 @@
           <button id="stStand" class="sm on">стоячи<br><span style="font-size:9.5px;opacity:.7">1.5 м/с</span></button>
           <button id="stCrouch" class="sm">на коліні<br><span style="font-size:9.5px;opacity:.7">0.75 м/с</span></button>
         </div>
+        <h2 style="margin-top:11px">КОЛИ ФІГУРА СТОЇТЬ НА МІСЦІ</h2>
+        <button id="acAimBtn" class="sm" style="width:100%">🎯 дивитись у точку</button>
+        <button id="acSupBtn" class="sm" style="width:100%;margin-top:5px">🔥 подавлення по цій точці</button>
+        <p class="hint" style="margin-top:5px">Для фігури без маршруту або після його завершення. Спершу «дивитись у точку», потім можна ввімкнути подавлення.</p>
         <h2 style="margin-top:11px">ТЕМП ДЛЯ НОВИХ ТОЧОК</h2>
         <div class="grid2">
           <button id="mWalk" class="sm on">крок</button>
@@ -217,6 +226,7 @@ const ROOM={x0:1,y0:1,w:24,h:17},OFF={x:22,y:22};let SCALE=38,BASE=38,ZOOM=1,PAN
 function updUI(){const r=cv.getBoundingClientRect();
   UI=Math.max(1,Math.min(3.2,cv.width/(r.width||cv.width)))}
 // параметри моделі
+const APP_VER='1.4';                    // видима версія — щоб бачити, у кого яка збірка
 const OBS_HALF=45, SPRINT_OBS=15, FIRE_HALF=3.5, FIRE_R=39, SIGHT=54;
 const EXPOSE=1.0;                       // с у секторі вогню до ураження
 const HOLD_K=0.8;                       // хто тримає позицію — реагує швидше (0.8 с)
@@ -251,11 +261,11 @@ function histRedo(){if(!redoStack.length)return;
   const st=redoStack.pop();histReady=false;apply(JSON.parse(st));histReady=true;flash('повернуто');syncHistBtns()}
 function flash(t){const v=document.getElementById('verdict');const old=v.textContent;
   v.textContent=t;setTimeout(()=>{if(v.textContent===t)v.textContent=old},900)}
-let selActor=null, selCover=null, selPt=null, aimPick=false, ptMode='walk', lastClick=0, lastHit=null;  // ptMode: walk | sprint
+let selActor=null, selCover=null, selPt=null, aimPick=false, acAimPick=false, ptMode='walk', lastClick=0, lastHit=null;  // ptMode: walk | sprint
 let tool='edit', secMode=0, ruler=null, showHidden=true;   // showHidden — режим інструктора   // tool: edit|pan|ruler; secMode 0=всі 1=обрана 2=немає
 
 function mkActor(x,y,face,side){return{x,y,face,side,low:false,alive:true,
-  route:[],seg:0,speed:0,stun:0,expo:{},hurt:0,sx:x,sy:y,slow:false,done:false,mode:'walk',supT:0,suppressing:false,supAt:null}}
+  route:[],seg:0,speed:0,stun:0,expo:{},hurt:0,sx:x,sy:y,slow:false,done:false,mode:'walk',supT:0,suppressing:false,supAt:null,aimAt:null,sup:false}}
 function initScene(){
   ops=[mkActor(5,12,-90,'op'),mkActor(7,12,-90,'op')];
   foes=[mkActor(19,5,180,'foe')];
@@ -326,11 +336,31 @@ const CELL=.4, PLAN_M=.55;
 function inCoverM(x,y,m){for(const r of covers)if(ptInCover(x,y,r,m))return r;return null}
 function segFree(a,b,m){m=(m===undefined)?PLAN_M:m;const d=dist(a,b),n=Math.max(2,Math.ceil(d/(CELL*.5)));
   for(let k=0;k<=n;k++){const t=k/n;if(inCoverM(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,m))return false}return true}
-function findPath(from,to){
+// мінімальна купа — щоб пошук шляху не гальмував на великих полях
+function Heap(){this.a=[]}
+Heap.prototype.push=function(v){const a=this.a;a.push(v);let i=a.length-1;
+  while(i>0){const p=(i-1)>>1;if(a[p][0]<=a[i][0])break;const t=a[p];a[p]=a[i];a[i]=t;i=p}};
+Heap.prototype.pop=function(){const a=this.a,top=a[0],last=a.pop();
+  if(a.length){a[0]=last;let i=0;
+    for(;;){const l=2*i+1,r=l+1;let m=i;
+      if(l<a.length&&a[l][0]<a[m][0])m=l;
+      if(r<a.length&&a[r][0]<a[m][0])m=r;
+      if(m===i)break;const t=a[m];a[m]=a[i];a[i]=t;i=m}}
+  return top};
+// кеш сітки перешкод — перераховуємо лише коли щось змінилось
+let gridCache=null;
+function gridStamp(){let s=ROOM.x0+'|'+ROOM.y0+'|'+ROOM.w+'|'+ROOM.h+'|'+covers.length;
+  for(const c of covers)s+='|'+c.x.toFixed(2)+','+c.y.toFixed(2)+','+c.w.toFixed(2)+','+c.h.toFixed(2)+','+(c.ang||0).toFixed(1)+','+(c.shape||'r');
+  return s}
+function buildGrid(){const st=gridStamp();
+  if(gridCache&&gridCache.stamp===st)return gridCache;
   const W=Math.ceil(ROOM.w/CELL),H=Math.ceil(ROOM.h/CELL),N=W*H;
   const blocked=new Uint8Array(N);
   for(let j=0;j<H;j++)for(let i=0;i<W;i++){
     const x=ROOM.x0+(i+.5)*CELL,y=ROOM.y0+(j+.5)*CELL;if(inCoverM(x,y,PLAN_M))blocked[j*W+i]=1}
+  gridCache={stamp:st,W,H,N,blocked};return gridCache}
+function findPath(from,to){
+  const g=buildGrid(),W=g.W,H=g.H,N=g.N,blocked=g.blocked;
   const ci=p=>Math.max(0,Math.min(W-1,Math.floor((p.x-ROOM.x0)/CELL)));
   const cj=p=>Math.max(0,Math.min(H-1,Math.floor((p.y-ROOM.y0)/CELL)));
   let si=ci(from),sj=cj(from),ti=ci(to),tj=cj(to);
@@ -341,11 +371,11 @@ function findPath(from,to){
     return null};
   const st=nearestFree(si,sj),en=nearestFree(ti,tj);if(!st||!en)return null;
   si=st[0];sj=st[1];ti=en[0];tj=en[1];
-  const g=new Float32Array(N).fill(Infinity),came=new Int32Array(N).fill(-1);
+  const gc=new Float32Array(N).fill(Infinity),came=new Int32Array(N).fill(-1);
   const h=(i,j)=>Math.hypot(i-ti,j-tj);
-  const open=[[h(si,sj),si,sj]];g[sj*W+si]=0;const seen=new Uint8Array(N);
+  const open=new Heap();open.push([h(si,sj),si,sj]);gc[sj*W+si]=0;const seen=new Uint8Array(N);
   const D=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,1.41],[1,-1,1.41],[-1,1,1.41],[-1,-1,1.41]];
-  while(open.length){open.sort((a,b)=>a[0]-b[0]);const cur=open.shift(),i=cur[1],j=cur[2],id=j*W+i;
+  while(open.a.length){const cur=open.pop(),i=cur[1],j=cur[2],id=j*W+i;
     if(seen[id])continue;seen[id]=1;
     if(i===ti&&j===tj){const pts=[];let c=id;
       while(c!==-1){const cy=Math.floor(c/W),cx=c%W;pts.unshift({x:ROOM.x0+(cx+.5)*CELL,y:ROOM.y0+(cy+.5)*CELL});c=came[c]}
@@ -356,8 +386,8 @@ function findPath(from,to){
       return out}
     for(const d of D){const ni=i+d[0],nj=j+d[1];if(!free(ni,nj))continue;
       if(d[2]>1&&(!free(i+d[0],j)||!free(i,j+d[1])))continue;
-      const nid=nj*W+ni,ng=g[id]+d[2];
-      if(ng<g[nid]){g[nid]=ng;came[nid]=id;open.push([ng+h(ni,nj),ni,nj])}}}
+      const nid=nj*W+ni,ng=gc[id]+d[2];
+      if(ng<gc[nid]){gc[nid]=ng;came[nid]=id;open.push([ng+h(ni,nj),ni,nj])}}}
   return null}
 // виштовхнути точку назовні перешкоди (з урахуванням повороту)
 function pushOut(x,y,m){m=(m===undefined)?.35:m;
@@ -411,7 +441,12 @@ function advance(a,dt){
     if(p)a.desiredAim=p.aimAt?bearing(a,p.aimAt):((p.aim===undefined||p.aim===null)?a.desiredAim:p.aim);
     if(a.holdT<=0)popup(a,'рушив','#8fd3f0');
     return}
-  if(a.route.length<2||a.seg>=a.route.length-1){a.speed=0;a.done=true;a.suppressing=false;a.supAt=null;return}
+  if(a.route.length<2||a.seg>=a.route.length-1){a.speed=0;a.done=true;
+    // стоїть на позиції: може тримати призначену ціль і вести подавлення
+    a.suppressing=!!(a.sup&&a.aimAt);a.supAt=a.suppressing?a.aimAt:null;
+    if(a.suppressing)a.low=false;
+    if(a.aimAt)a.desiredAim=bearing(a,a.aimAt);
+    return}
   if(inCover(a.x,a.y)){const q=pushOut(a.x,a.y,.3);a.x=q.x;a.y=q.y;a.detour=null}
   const tgt=a.route[a.seg+1];a.mode=(tgt.mode==='sprint')?'sprint':'walk';
   a.suppressing=!!(tgt.sup&&tgt.aimAt&&a.mode!=='sprint');
@@ -634,6 +669,14 @@ function drawActor(a){const p=m2p(a.x,a.y),R=(a.low?8:12)*UI,isOp=a.side==='op';
     ctx.fillText('притиснутий',p.x,p.y-R-6*UI)}
   if(a.alive&&a.suppressing){ctx.fillStyle='#e0a13b';ctx.font='bold '+Math.round(9*UI)+'px system-ui';
     ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('🔥 подавлення',p.x,p.y-R-6*UI)}
+  if(a.alive&&a.aimAt&&a===selActor&&!playing){const t=m2p(a.aimAt.x,a.aimAt.y),col=a.sup?'224,161,59':'240,197,131';
+    if(a.sup){ctx.fillStyle='rgba(224,161,59,.13)';ctx.beginPath();ctx.arc(t.x,t.y,SUP_RADIUS*SCALE,0,7);ctx.fill()}
+    ctx.strokeStyle='rgba('+col+',.75)';ctx.lineWidth=1.3*UI;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(t.x,t.y);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle=a.sup?'#e0a13b':'#f0c583';ctx.lineWidth=2*UI;
+    ctx.beginPath();ctx.arc(t.x,t.y,7*UI,0,7);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(t.x-10*UI,t.y);ctx.lineTo(t.x+10*UI,t.y);
+    ctx.moveTo(t.x,t.y-10*UI);ctx.lineTo(t.x,t.y+10*UI);ctx.stroke()}
   if(a.alive&&a.track&&a.track.alive){const q=m2p(a.track.x,a.track.y);
     ctx.strokeStyle='rgba(240,197,131,.5)';ctx.lineWidth=1;ctx.setLineDash([2,4]);
     ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([])}
@@ -691,13 +734,22 @@ cv.addEventListener('pointerdown',ev=>{ev.preventDefault();updUI();const pos=evP
     try{cv.setPointerCapture(ev.pointerId)}catch(e){}
     histPush();dragging={t:h.t,a:h.a};return}
   lastHit=null;
+  // режим «дивитись у точку» для фігури, що стоїть
+  if(acAimPick&&selActor){
+    histPush();selActor.aimAt={x:pos.mx,y:pos.my};acAimPick=false;
+    selActor.face=deg(Math.atan2(pos.my-selActor.sy,pos.mx-selActor.sx));
+    resetRun();refreshActorFire();flash('ціль задано — фігура тримає її, поки стоїть');return}
   // режим «дивитись у точку»: наступний клік задає ціль для обраної точки
   if(aimPick&&selActor&&selPt!==null&&selPt>0){
     histPush();selActor.route[selPt].aimAt={x:pos.mx,y:pos.my};selActor.route[selPt].aim=null;
     aimPick=false;resetRun();refreshPtCard();flash('ціль задано — боєць триматиме її у прицілі');return}
   // клік по точці маршруту обраної фігури — вибрати її
   if(selActor)for(let i=0;i<selActor.route.length;i++){const q=m2p(selActor.route[i].x,selActor.route[i].y);
-    if(Math.hypot(pos.px-q.x,pos.py-q.y)<14*UI){selPt=i;refreshPtCard();return}}
+    if(Math.hypot(pos.px-q.x,pos.py-q.y)<15*UI){
+      selPt=i;refreshPtCard();
+      if(i===0)return;                                   // нульова точка = місце фігури, рухається разом з нею
+      try{cv.setPointerCapture(ev.pointerId)}catch(e){}
+      histPush();dragging={t:'pt',a:selActor,i};return}}
   if(selActor&&!playing)for(let i=1;i<selActor.route.length;i++){const h=aimHandlePos(selActor,i),hp=m2p(h.x,h.y);
     if(Math.hypot(pos.px-hp.x,pos.py-hp.y)<15*UI){
       histPush();if(ev.shiftKey){selActor.route[i].aim=null;resetRun();return}
@@ -706,8 +758,8 @@ cv.addEventListener('pointerdown',ev=>{ev.preventDefault();updUI();const pos=evP
     const rh=rotHandle(r),rp=m2p(rh.x,rh.y);
     if(!r.lock&&Math.hypot(pos.px-rp.x,pos.py-rp.y)<16*UI){histPush();dragging={t:'rotate',i};return}
     const cor=cornersOf(r)[2],cp=m2p(cor.x,cor.y);
-    if(!r.lock&&Math.hypot(pos.px-cp.x,pos.py-cp.y)<17*UI){histPush();
-      dragging={t:'resize',i,ar:(r.w>0?r.h/r.w:1)};return}
+    if(!r.lock&&ev.shiftKey&&Math.hypot(pos.px-cp.x,pos.py-cp.y)<17*UI){histPush();
+      dragging={t:'resize',i,ar:(r.w>0?r.h/r.w:1)};return}   // Shift — змінити розмір
     if(ptInCover(pos.mx,pos.my,r)){selCover=i;refreshChips();if(r.lock)return;
       histPush();dragging={t:'cover',i,dx:pos.mx-r.x,dy:pos.my-r.y};return}}
   // клік по полю — точка маршруту обраної фігури
@@ -730,8 +782,8 @@ cv.addEventListener('pointermove',ev=>{if(!dragging)return;ev.preventDefault();c
     r.y=Math.max(ROOM.y0-r.h/2,Math.min(ROOM.y0+ROOM.h-r.h/2,ny))}
   else if(dragging.t==='resize'){const r=covers[dragging.i],L=toLocal(pos.mx,pos.my,r);
     let nw=Math.abs(L.lx)*2,nh=Math.abs(L.ly)*2;
-    if(ev.shiftKey||r.prop){
-      // Shift або замок «⊙»: коло лишається колом, прямокутник тримає свої пропорції
+    if(r.prop){
+      // замок «⊙»: коло лишається колом, прямокутник тримає свої пропорції
       const ar=Math.max(.02,Math.min(50,isEll(r)?1:(dragging.ar||1)));
       let b=Math.max(nw,nh/ar);                 // ведучий бік
       b=Math.max(.5,Math.min(30,b));
@@ -740,6 +792,10 @@ cv.addEventListener('pointermove',ev=>{if(!dragging)return;ev.preventDefault();c
       nw=b;nh=b*ar}
     nw=Math.max(.5,Math.min(30,nw));nh=Math.max(.5,Math.min(30,nh));
     const c=covCenter(r);r.w=nw;r.h=nh;r.x=c.x-nw/2;r.y=c.y-nh/2}
+  else if(dragging.t==='pt'){const a=dragging.a,p=a.route[dragging.i];
+    const q=pushOut(Math.max(ROOM.x0+.4,Math.min(ROOM.x0+ROOM.w-.4,pos.mx)),
+                    Math.max(ROOM.y0+.4,Math.min(ROOM.y0+ROOM.h-.4,pos.my)));
+    p.x=q.x;p.y=q.y}
   else if(dragging.t==='aim'){const a=dragging.a,p=a.route[dragging.i];
     p.aimAt=null;                                  // ручку крутять вручну — ціль знімається
     const base=bearing(a.route[dragging.i-1],p);let ang=deg(Math.atan2(pos.my-p.y,pos.mx-p.x));
@@ -750,7 +806,9 @@ cv.addEventListener('pointermove',ev=>{if(!dragging)return;ev.preventDefault();c
     if(ev.shiftKey)r.ang=Math.round(r.ang/15)*15}});
 function unstickAll(){all().forEach(a=>{const q=pushOut(a.sx,a.sy);
   if(q.x!==a.sx||q.y!==a.sy){a.sx=a.x=q.x;a.sy=a.y=q.y;if(a.route.length)a.route[0]={x:q.x,y:q.y,mode:'walk'}}})}
-function endDrag(){if(dragging&&(dragging.t==='cover'||dragging.t==='rotate'||dragging.t==='resize'))unstickAll();dragging=null}
+function endDrag(){if(dragging&&(dragging.t==='cover'||dragging.t==='rotate'||dragging.t==='resize'))unstickAll();
+  if(dragging&&dragging.t==='pt')resetRun();
+  dragging=null}
 window.addEventListener('pointerup',endDrag);
 window.addEventListener('pointercancel',endDrag);
 cv.addEventListener('pointerup',endDrag);
@@ -835,7 +893,26 @@ function syncModeBtns(){
 function setPtMode(m){ptMode=m;syncModeBtns()}
 function setStance(low){if(!selActor){flash('спершу обери фігуру');return}
   histPush();selActor.slow=low;selActor.low=low;resetRun();syncModeBtns();refreshChips()}
-function pickActor(a){selActor=a;selCover=null;selPt=null;aimPick=false;syncModeBtns();refreshChips();refreshPtCard()}
+function pickActor(a){selActor=a;selCover=null;selPt=null;aimPick=false;acAimPick=false;
+  syncModeBtns();refreshChips();refreshPtCard();refreshActorFire()}
+function refreshActorFire(){const ab=document.getElementById('acAimBtn'),sb=document.getElementById('acSupBtn');
+  if(!selActor){ab.style.opacity='.45';sb.style.opacity='.45';
+    ab.classList.toggle('on',false);sb.classList.toggle('on',false);
+    ab.textContent='🎯 дивитись у точку';sb.textContent='🔥 подавлення по цій точці';return}
+  ab.style.opacity='1';
+  ab.classList.toggle('on',acAimPick||!!selActor.aimAt);
+  ab.textContent=acAimPick?'⬤ клікни, куди дивитись…':(selActor.aimAt?'🎯 ціль задано — зняти':'🎯 дивитись у точку');
+  sb.style.opacity=selActor.aimAt?'1':'.45';
+  sb.classList.toggle('on',!!selActor.sup);
+  sb.textContent=selActor.sup?'🔥 подавлення увімкнено':'🔥 подавлення по цій точці'}
+document.getElementById('acAimBtn').onclick=()=>{if(!selActor){flash('спершу обери фігуру');return}
+  if(selActor.aimAt){histPush();selActor.aimAt=null;selActor.sup=false;acAimPick=false;resetRun()}
+  else acAimPick=!acAimPick;
+  refreshActorFire();if(acAimPick)flash('клікни по площадці — туди фігура дивитиметься, поки стоїть')};
+document.getElementById('acSupBtn').onclick=()=>{if(!selActor)return;
+  if(!selActor.aimAt){flash('спершу задай точку через «🎯 дивитись у точку»');return}
+  histPush();selActor.sup=!selActor.sup;resetRun();refreshActorFire();
+  flash(selActor.sup?'подавлення — фігура поливає точку і сама відкрита':'подавлення знято')};
 function refreshPtCard(){const card=document.getElementById('ptCard');
   const ok=selActor&&selPt!==null&&selPt>0&&selPt<selActor.route.length;
   card.style.display=ok?'':'none';if(!ok)return;
@@ -909,12 +986,15 @@ function clampAll(){const X0=ROOM.x0,Y0=ROOM.y0,X1=ROOM.x0+ROOM.w,Y1=ROOM.y0+ROO
   all().forEach(a=>{a.sx=a.x=Math.max(X0+.4,Math.min(X1-.4,a.x));a.sy=a.y=Math.max(Y0+.4,Math.min(Y1-.4,a.y));
     a.route.forEach(p=>{p.x=Math.max(X0+.4,Math.min(X1-.4,p.x));p.y=Math.max(Y0+.4,Math.min(Y1-.4,p.y))})})}
 function grow(side,d){
-  if(side==='L'){const nw=ROOM.w+d;if(nw<10||nw>50)return;ROOM.x0-=d;ROOM.w=nw}
-  if(side==='R'){const nw=ROOM.w+d;if(nw<10||nw>50)return;ROOM.w=nw}
-  if(side==='U'){const nh=ROOM.h+d;if(nh<7||nh>34)return;ROOM.y0-=d;ROOM.h=nh}
-  if(side==='D'){const nh=ROOM.h+d;if(nh<7||nh>34)return;ROOM.h=nh}
+  if(side==='L'){const nw=ROOM.w+d;if(nw<10||nw>200)return;ROOM.x0-=d;ROOM.w=nw}
+  if(side==='R'){const nw=ROOM.w+d;if(nw<10||nw>200)return;ROOM.w=nw}
+  if(side==='U'){const nh=ROOM.h+d;if(nh<7||nh>140)return;ROOM.y0-=d;ROOM.h=nh}
+  if(side==='D'){const nh=ROOM.h+d;if(nh<7||nh>140)return;ROOM.h=nh}
   fitScale();clampAll()}
-['L','R','U','D'].forEach(k=>{document.getElementById('f'+k).onclick=e=>{histPush();grow(k,e.shiftKey?-3:3)}});
+['L','R','U','D'].forEach(k=>{document.getElementById('f'+k).onclick=e=>{histPush();
+  const step=(ROOM.w>80||ROOM.h>60)?10:3;                    // на великому полі крок більший
+  grow(k,e.shiftKey?-step:step);
+  flash('поле: '+Math.round(ROOM.w)+' × '+Math.round(ROOM.h)+' м')}});
 function setTool(t){tool=(tool===t?'edit':t);if(tool!=='ruler')ruler=null;
   document.getElementById('panBtn').classList.toggle('on',tool==='pan');
   document.getElementById('rulerBtn').classList.toggle('on',tool==='ruler');
@@ -967,7 +1047,8 @@ function refreshList(sel){const st=readStore(),el=document.getElementById('saved
   if(sel)el.value=sel}
 function showBrief(t){currentBrief=t||'';document.getElementById('briefText').textContent=currentBrief;
   document.getElementById('briefCard').style.display=currentBrief?'block':'none'}
-function packActor(a){return{x:a.sx,y:a.sy,face:a.face,low:a.slow,lock:!!a.lock,hidden:!!a.hidden,route:a.route.map(p=>({x:p.x,y:p.y,mode:p.mode||'walk',aim:(p.aim===undefined?null:p.aim),
+function packActor(a){return{x:a.sx,y:a.sy,face:a.face,low:a.slow,lock:!!a.lock,hidden:!!a.hidden,
+  aimAt:(a.aimAt?{x:a.aimAt.x,y:a.aimAt.y}:null),sup:!!a.sup,route:a.route.map(p=>({x:p.x,y:p.y,mode:p.mode||'walk',aim:(p.aim===undefined?null:p.aim),
     aimAt:(p.aimAt?{x:p.aimAt.x,y:p.aimAt.y}:null),hold:(p.hold||0),sup:!!p.sup}))}}
 function snapshot(brief){return{room:{x0:ROOM.x0,y0:ROOM.y0,w:ROOM.w,h:ROOM.h},
   covers:covers.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,ang:c.ang||0,tall:c.tall!==false,lock:!!c.lock,shape:c.shape||'rect',prop:!!c.prop})),
@@ -975,11 +1056,13 @@ function snapshot(brief){return{room:{x0:ROOM.x0,y0:ROOM.y0,w:ROOM.w,h:ROOM.h},
 function apply(d){if(d.room){ROOM.x0=(d.room.x0!==undefined?d.room.x0:1);ROOM.y0=(d.room.y0!==undefined?d.room.y0:1);ROOM.w=d.room.w;ROOM.h=d.room.h;fitScale()}
   covers=d.covers.map(c=>({...c}));
   const un=(o,side)=>{const a=mkActor(o.x,o.y,o.face,side);a.slow=!!o.low;a.lock=!!o.lock;a.hidden=!!o.hidden;
+    a.aimAt=(o.aimAt?{x:o.aimAt.x,y:o.aimAt.y}:null);a.sup=!!o.sup;
     if((o.route||[]).some(p=>p.mode==='crouch'))a.slow=true;      // сумісність зі старими сценаріями
     a.low=a.slow;a.route=(o.route||[]).map(p=>({...p,mode:(p.mode==='sprint')?'sprint':'walk',
       hold:(p.hold||0),aimAt:(p.aimAt?{x:p.aimAt.x,y:p.aimAt.y}:null),sup:!!p.sup}));return a};
   ops=d.ops.map(o=>un(o,'op'));foes=(d.foes||[]).map(o=>un(o,'foe'));
   selActor=null;selPt=null;aimPick=false;
+  if(typeof refreshActorFire==='function')refreshActorFire();
   if(all().some(a=>a.hidden)){showHidden=false;const hb=document.getElementById('hidBtn');
     if(hb){hb.classList.toggle('on',false);hb.textContent='🚫 Приховані: сховані'}}
   showBrief(d.brief);resetRun();refreshChips();
@@ -1038,6 +1121,8 @@ document.addEventListener('keydown',e=>{const k=(e.key||'').toLowerCase();
   if(!(e.ctrlKey||e.metaKey))return;
   if(k==='z'&&!e.shiftKey){e.preventDefault();histUndo()}
   else if(k==='y'||(k==='z'&&e.shiftKey)){e.preventDefault();histRedo()}});
+const vt=document.getElementById('verTag');if(vt)vt.textContent='v'+APP_VER;
+document.title='Тактичний полігон v'+APP_VER;
 initScene();fitScale();refreshList();refreshPalette();syncModeBtns();histReady=true;syncHistBtns();
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;step(dt);draw();requestAnimationFrame(loop)}
