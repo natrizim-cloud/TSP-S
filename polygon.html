@@ -10,7 +10,7 @@
   ННІ № 2 Харківського національного університету внутрішніх справ
   ORCID: 0000-0003-0366-7217
 
-  ВЕРСІЯ: 1.4   ДАТА РЕДАКЦІЇ: 23.09.2026
+  ВЕРСІЯ: 1.5   ДАТА РЕДАКЦІЇ: 23.09.2026
   Контрольна сума цієї редакції — файл ВЕРСІЇ.md
 
   Усі права застережено. Умови використання — файл LICENSE.
@@ -81,7 +81,7 @@
   <h1>Тактичний полігон</h1>
   <p class="sub">Побудуй площадку, розстав обидві сторони, задай кожному маршрут і режим руху — і програй.</p>
   <p style="font-size:10.5px;color:#5a6673;margin:-8px 0 12px">
-    <b id="verTag" style="color:#8fd3f0">v1.4</b> · © 2026 Шевченко Т.&nbsp;В. · кафедра тактико-спеціальної підготовки ННІ&nbsp;№2 ХНУВС · усі права застережено</p>
+    <b id="verTag" style="color:#8fd3f0">v1.5</b> · © 2026 Шевченко Т.&nbsp;В. · кафедра тактико-спеціальної підготовки ННІ&nbsp;№2 ХНУВС · усі права застережено</p>
   <div class="layout">
     <div class="stage">
       <canvas id="cv" width="1000" height="700"></canvas>
@@ -109,6 +109,7 @@
         <button id="rulerBtn" class="sm" title="виміряти відстань">📏 Лінійка</button>
         <button id="secBtn" class="sm" title="показ секторів">Сектори: всі</button>
         <button id="hidBtn" class="sm on" title="приховані фігури: видно інструктору / не видно курсанту">👁 Приховані: видно</button>
+        <button id="sndBtn" class="sm on" title="звук пострілів">🔊 Звук</button>
       </div>
       <div class="legend">
         <span><span class="dot" style="background:var(--op)"></span>свої</span>
@@ -116,6 +117,7 @@
         <span><span class="sw" style="background:#3a4658"></span>стіна на весь зріст</span>
         <span><span class="sw" style="background:#26303c;border:1px dashed #5a6a7e"></span>укриття по пояс</span>
         <span>мале коло = на коліні</span>
+        <span>🔥 помаранчевий конус = подавлення</span>
         <span>подвійний клік по фігурі — стоячи / коліно</span>
         <span><b>Shift</b> + кутик — змінити розмір перешкоди</span>
         <span>жовта ручка — поворот (Shift — по 15°)</span>
@@ -226,7 +228,7 @@ const ROOM={x0:1,y0:1,w:24,h:17},OFF={x:22,y:22};let SCALE=38,BASE=38,ZOOM=1,PAN
 function updUI(){const r=cv.getBoundingClientRect();
   UI=Math.max(1,Math.min(3.2,cv.width/(r.width||cv.width)))}
 // параметри моделі
-const APP_VER='1.4';                    // видима версія — щоб бачити, у кого яка збірка
+const APP_VER='1.5';                    // видима версія — щоб бачити, у кого яка збірка
 const OBS_HALF=45, SPRINT_OBS=15, FIRE_HALF=3.5, FIRE_R=39, SIGHT=54;
 const EXPOSE=1.0;                       // с у секторі вогню до ураження
 const HOLD_K=0.8;                       // хто тримає позицію — реагує швидше (0.8 с)
@@ -234,11 +236,39 @@ const MOVE_TURN=0.7;                    // у русі ствол доводит
 const SUP_R=35;                         // дальність подавлення, м
 const SUP_RADIUS=2.5;                   // радіус впливу навколо точки, м
 const SUP_HOLD=0.7;                     // скільки триває притискання після припинення вогню
-const SUP_HALF=9;                       // півкут конуса подавлення
+const SUP_HALF=9;                       // півкут конуса подавлення (малюнок)
+const SUP_FIRE_HALF=1.5;                // хто подавляє — б'є вузько, 3°
+const SUP_OBS_HALF=3.5;                 // і майже не бачить по боках, 7°
+const SUP_KILL_K=3;                     // подавлення — вогонь по району, не прицільний: вражає втричі довше
+const SUP_NEED=0.6;                     // тиск до притискання: сховатись швидше, ніж прицілитись
+const PIN_OBS_HALF=12;                  // притиснутий голови не підводить
+const DUEL_MARGIN=0.12;                 // запас часу, за яким дуель вважається програшною
 const V_WALK=1.5, V_CROUCH=0.75, V_SPRINT=4.5, ACC=5.0, DEC=7.0;
 const CRASH_STUN=1.2, KILL_NEAR=1.0, AIM_MAX=140, TURN_RATE=260, LOW_SHADOW=1.0, MAX_RUN=120;
 let runT=0;   // сектор можна тримати до ±140° від напрямку руху
-let pops=[];
+let pops=[],tracers=[],sparks=[],fireClock=0;
+// звук пострілів синтезується на льоту — зовнішніх файлів не потрібно
+let AC=null,sndOn=true,lastSnd=-1;
+function initAudio(){if(AC)return;
+  try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){AC=null}}
+function shotSound(){if(!sndOn)return;initAudio();if(!AC)return;
+  const now=AC.currentTime;if(now-lastSnd<0.035)return;lastSnd=now;
+  const dur=0.055,sr=AC.sampleRate,n=Math.max(8,Math.floor(sr*dur));
+  const buf=AC.createBuffer(1,n,sr),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++){const k=1-i/n;d[i]=(Math.random()*2-1)*k*k*k}
+  const src=AC.createBufferSource();src.buffer=buf;
+  const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=1100+Math.random()*700;
+  const g=AC.createGain();g.gain.value=0.06;
+  src.connect(f);f.connect(g);g.connect(AC.destination);
+  try{src.start()}catch(e){}}
+function addTracer(a,tx,ty){
+  tracers.push({x1:a.x,y1:a.y,x2:tx,y2:ty,t:0,op:a.side==='op'});
+  if(tracers.length>50)tracers.shift();
+  for(let i=0;i<3;i++){const ang=Math.random()*Math.PI*2,sp=.8+Math.random()*2.6;
+    sparks.push({x:tx+(Math.random()-.5)*.25,y:ty+(Math.random()-.5)*.25,
+      vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,t:0})}
+  if(sparks.length>150)sparks.splice(0,sparks.length-150);
+  shotSound()}
 
 function m2p(x,y){return{x:OFF.x+PAN.x+(x-ROOM.x0)*SCALE,y:OFF.y+PAN.y+(y-ROOM.y0)*SCALE}}
 function deg(r){return r*180/Math.PI}function rad(d){return d*Math.PI/180}
@@ -265,16 +295,16 @@ let selActor=null, selCover=null, selPt=null, aimPick=false, acAimPick=false, pt
 let tool='edit', secMode=0, ruler=null, showHidden=true;   // showHidden — режим інструктора   // tool: edit|pan|ruler; secMode 0=всі 1=обрана 2=немає
 
 function mkActor(x,y,face,side){return{x,y,face,side,low:false,alive:true,
-  route:[],seg:0,speed:0,stun:0,expo:{},hurt:0,sx:x,sy:y,slow:false,done:false,mode:'walk',supT:0,suppressing:false,supAt:null,aimAt:null,sup:false}}
+  route:[],seg:0,speed:0,stun:0,expo:{},hurt:0,sx:x,sy:y,slow:false,done:false,mode:'walk',supT:0,suppressing:false,supAt:null,aimAt:null,sup:false,press:0,guns:0,duck:0}}
 function initScene(){
   ops=[mkActor(5,12,-90,'op'),mkActor(7,12,-90,'op')];
   foes=[mkActor(19,5,180,'foe')];
   covers=[{x:11,y:8,w:5,h:.8,ang:0,tall:true,shape:'rect'},{x:8,y:5,w:1.6,h:1.6,ang:0,tall:true,shape:'ellipse'},{x:15,y:12,w:4,h:.8,ang:-28,tall:false,shape:'rect'}];
   currentBrief='';showBrief('');resetRun();refreshChips()}
 function all(){return ops.concat(foes)}
-function resetRun(){playing=false;events=[];pops=[];runT=0;
+function resetRun(){playing=false;events=[];pops=[];tracers=[];sparks=[];runT=0;
   all().forEach(a=>{a.x=a.sx;a.y=a.sy;a.alive=true;a.seg=0;a.speed=0;a.stun=0;a.hurt=0;a.expo={};a.done=false;
-    a.low=a.slow;a.track=null;a.desiredAim=null;a.slide=0;a.detour=null;a.saidDetour=0;a.holdT=0;a.saidHold=0;a.supT=0;a.suppressing=false;a.supAt=null;a.saidSup=0;a.mode=a.route.length>1?(a.route[1].mode||'walk'):'walk';
+    a.low=a.slow;a.track=null;a.desiredAim=null;a.slide=0;a.detour=null;a.saidDetour=0;a.holdT=0;a.saidHold=0;a.supT=0;a.suppressing=false;a.supAt=null;a.saidSup=0;a.press=0;a.guns=0;a.duck=0;a.mode=a.route.length>1?(a.route[1].mode||'walk'):'walk';
     if(a.route.length>1)a.face=bearing(a.route[0],a.route[1])});
   setVerdict('','Натисни «Програти».');document.getElementById('log').innerHTML=''}
 function setVerdict(cls,txt){const v=document.getElementById('verdict');v.className='verdict '+cls;v.textContent=txt}
@@ -406,11 +436,16 @@ function pushOut(x,y,m){m=(m===undefined)?.35:m;
 // боєць тримає позицію: стоїть на місці, зброя вже спрямована в сектор
 function holding(a){return a.alive&&a.stun<=0&&(a.speed<.15||a.holdT>0)}
 // скільки секунд йому треба, щоб уразити ціль
-function needExpose(a){return EXPOSE*(holding(a)?HOLD_K:1)}
-function canFire(a){return a.alive&&a.mode!=='sprint'&&a.stun<=0&&a.supT<=0&&!a.suppressing}
-function covers_(sh,t){return canFire(sh)&&t.alive&&Math.abs(norm(bearing(sh,t)-sh.face))<=FIRE_HALF
+function needExpose(a){let k=holding(a)?HOLD_K:1;
+  if(a.suppressing)k*=SUP_KILL_K;            // поливає район — влучає значно повільніше, ніж прицільно
+  return EXPOSE*k}
+function canFire(a){return a.alive&&a.mode!=='sprint'&&a.stun<=0&&a.supT<=0&&a.duck<=0}
+function fireHalf(a){return a.suppressing?SUP_FIRE_HALF:FIRE_HALF}   // подавлення — вужчий сектор ураження
+function covers_(sh,t){return canFire(sh)&&t.alive&&Math.abs(norm(bearing(sh,t)-sh.face))<=fireHalf(sh)
   &&losClear(sh,t,sh.low,t.low)&&dist(sh,t)<=FIRE_R}
-function obsHalf(a){if(a.supT>0)return 12;   // притиснутий голови не підводить
+function obsHalf(a){
+  if(a.supT>0)return PIN_OBS_HALF;          // притиснутий голови не підводить
+  if(a.suppressing)return SUP_OBS_HALF;     // хто поливає точку — не бачить, що по боках
   return a.mode==='sprint'?SPRINT_OBS:OBS_HALF}
 
 function sectorPoly(a,half,range){const pts=[a],n=32;
@@ -490,6 +525,15 @@ function advance(a,dt){
       const at=a.route[a.seg];
       if(at&&at.hold>0){a.holdT=at.hold;a.speed=0;popup(a,'зупинка '+at.hold+' с','#f0c583')}}}
 }
+// чи програю я цю дуель: хто раніше встигне — з урахуванням уже набраної експозиції
+function expoKey(t){return t.side+all().indexOf(t)}
+function duelTime(me,foe){
+  const err=Math.abs(norm(bearing(me,foe)-me.face));
+  const held=(me.expo&&me.expo[expoKey(foe)])||0;     // скільки я вже тримаю його
+  return err/TURN_RATE+Math.max(0,needExpose(me)-held)}
+function losingDuel(me,foe){return duelTime(me,foe)>duelTime(foe,me)+DUEL_MARGIN}
+// чи врятує присідання: якщо сівши я зникаю з його очей — є сенс ховатись
+function duckHelps(me,foe){return !losClear(foe,me,foe.low,true)}
 function visibleFoe(a){let best=null,bd=1e9;
   for(const t of all()){if(t.side===a.side||!t.alive)continue;
     const d=dist(a,t);if(d>SIGHT)continue;                       // далі дальності спостереження не бачить
@@ -501,6 +545,14 @@ function updateAim(a,dt){
   if(!a.alive||a.stun>0)return;
   let desired;
   const tg=canFire(a)?visibleFoe(a):null;
+  if(tg&&!a.suppressing&&losingDuel(a,tg)&&duckHelps(a,tg)){
+    // противник вийшов на мене раніше — довертатись довго, в розмін не йду
+    if(a.duck<=0){popup(a,'сховався','#8fd3f0');
+      addEvent(label(a)+' помітив '+label(tg).toLowerCase()+' запізно — довертатись довго, тому пішов за укриття.','warn')}
+    a.duck=1.2;a.low=true;a.track=null;
+    desired=a.face;
+    const df0=norm(desired-a.face);a.face+=Math.sign(df0)*Math.min(Math.abs(df0),TURN_RATE*dt);
+    return}
   if(tg){if(a.track!==tg){a.track=tg;popup(a,'веде ціль','#f0c583')}desired=bearing(a,tg)}
   else{if(a.track)popup(a,'втратив ціль','#8a94a0');a.track=null;
     desired=(a.desiredAim===undefined||a.desiredAim===null)?a.face:a.desiredAim}
@@ -508,6 +560,9 @@ function updateAim(a,dt){
   a.face=Math.abs(df)<=ts?desired:a.face+Math.sign(df)*ts}
 function step(dt){
   pops.forEach(o=>o.t+=dt);pops=pops.filter(o=>o.t<1.6);
+  tracers.forEach(o=>o.t+=dt);tracers=tracers.filter(o=>o.t<0.16);
+  sparks.forEach(o=>{o.t+=dt;o.x+=o.vx*dt;o.y+=o.vy*dt;o.vx*=.88;o.vy*=.88});
+  sparks=sparks.filter(o=>o.t<0.45);
   if(!playing)return;
   const A=all();
   // ураження за експозицією в секторі вогню
@@ -531,18 +586,33 @@ function step(dt){
         addEvent(shooterName(sh)+' вийшов упритул до '+label(t).toLowerCase()+' — знищено.',sh.side==='op'?'stop':'kill')}}}
   A.forEach(a=>advance(a,dt));
   A.forEach(a=>updateAim(a,dt));
-  // подавлення: хто поливає точку — притискає всіх поруч із нею, кого бачить
-  A.forEach(a=>{if(a.supT>0){a.supT-=dt;if(a.supT<=0){popup(a,'піднявся','#f0c583');a.saidSup=0}}});
+  // подавлення: тиск накопичується. Один ствол притискає за секунду, п'ять — за 0.2 с
+  A.forEach(a=>{a.guns=0});
   for(const sh of A){if(!sh.alive||!sh.suppressing||!sh.supAt)continue;
     if(!sh.saidSup){sh.saidSup=1;popup(sh,'подавлення','#e0a13b');
-      addEvent(shooterName(sh)+' веде подавлення — сам при цьому відкритий.','warn')}
+      addEvent(shooterName(sh)+' веде подавлення — сам при цьому майже нічого не бачить по боках.','warn')}
     for(const t of A){if(t.side===sh.side||!t.alive)continue;
       if(dist(t,sh.supAt)>SUP_RADIUS)continue;
       if(dist(sh,t)>SUP_R)continue;
       if(!losClear(sh,t,sh.low,t.low))continue;
-      if(t.supT<=0){popup(t,'притиснутий','#8fd3f0');
-        addEvent(label(t)+' притиснутий вогнем — сектор не тримає.','warn')}
-      t.supT=SUP_HOLD}}
+      t.guns++}}
+  // візуал і звук вогню — короткими чергами
+  fireClock+=dt;let boom=false;
+  if(fireClock>=0.1){fireClock=0;boom=true}
+  if(boom)for(const sh of A){if(!sh.alive)continue;
+    if(sh.suppressing&&sh.supAt){addTracer(sh,sh.supAt.x+(Math.random()-.5)*1.2,sh.supAt.y+(Math.random()-.5)*1.2);continue}
+    if(!canFire(sh))continue;
+    for(const t of A){if(t.side===sh.side||!t.alive)continue;
+      if(covers_(sh,t)){addTracer(sh,t.x+(Math.random()-.5)*.5,t.y+(Math.random()-.5)*.5);break}}}
+  A.forEach(a=>{if(a.duck>0){a.duck-=dt;if(a.duck<=0)popup(a,'визирнув','#f0c583');else a.low=true}});
+  for(const a of A){if(!a.alive)continue;
+    if(a.guns>0){a.press=(a.press||0)+dt*a.guns;
+      if(a.press>=SUP_NEED&&a.supT<=0){popup(a,'притиснутий','#8fd3f0');
+        addEvent(label(a)+' притиснутий вогнем'+(a.guns>1?' ('+a.guns+' стволи)':'')+' — сектор не тримає, присів.','warn')}
+      if(a.press>=SUP_NEED)a.supT=SUP_HOLD}
+    else{a.press=Math.max(0,(a.press||0)-dt);
+      if(a.supT>0){a.supT-=dt;if(a.supT<=0){popup(a,'піднявся','#f0c583');a.saidSup=0;a.press=0}}}
+    a.low=a.supT>0?true:a.low}                    // притиснутий тулиться до землі
   // сценарій триває, доки хтось іде АБО доки триває вогневий контакт
   const liveA=A.filter(a=>a.alive);
   if(!A.length)return;
@@ -550,6 +620,9 @@ function step(dt){
   const moving=liveA.some(a=>!a.done);
   let contact=false;
   for(const a of liveA){if(contact)break;
+    // подавлення теж є контактом: інакше сценарій обірветься до того, як тиск накопичиться
+    if(a.suppressing&&a.supAt&&liveA.some(t=>t.side!==a.side&&dist(t,a.supAt)<=SUP_RADIUS)){contact=true;break}
+    if(a.supT>0||a.duck>0){contact=true;break}
     for(const t of liveA){if(t.side===a.side)continue;
       if(covers_(a,t)){contact=true;break}
       if(canFire(a)&&dist(a,t)<=SIGHT&&Math.abs(norm(bearing(a,t)-a.face))<=obsHalf(a)&&losClear(a,t,a.low,t.low)){contact=true;break}}}
@@ -683,6 +756,15 @@ function drawActor(a){const p=m2p(a.x,a.y),R=(a.low?8:12)*UI,isOp=a.side==='op';
   if(a.hidden){ctx.restore();ctx.setLineDash([]);
     ctx.fillStyle='rgba(240,197,131,.9)';ctx.font='bold '+Math.round(9*UI)+'px system-ui';
     ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('прихований',p.x,p.y-R-4*UI)}}
+function drawFire(){
+  tracers.forEach(o=>{const a=m2p(o.x1,o.y1),b=m2p(o.x2,o.y2),al=Math.max(0,1-o.t/0.16);
+    ctx.globalAlpha=al*.9;ctx.strokeStyle=o.op?'#bfe8ff':'#ffd2a0';ctx.lineWidth=1.6*UI;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    ctx.globalAlpha=al;ctx.fillStyle='#fff3c4';
+    ctx.beginPath();ctx.arc(a.x,a.y,3.2*UI,0,7);ctx.fill();ctx.globalAlpha=1});
+  sparks.forEach(o=>{const p=m2p(o.x,o.y),al=Math.max(0,1-o.t/0.45);
+    ctx.globalAlpha=al;ctx.fillStyle=o.t<.2?'#fff0b0':'#e0a13b';
+    ctx.beginPath();ctx.arc(p.x,p.y,(1.6+2*al)*UI,0,7);ctx.fill();ctx.globalAlpha=1})}
 function drawPops(){pops.forEach(o=>{const p=m2p(o.x,o.y),up=o.t*26,al=Math.max(0,1-o.t/1.6);
   ctx.globalAlpha=al;ctx.font='bold '+Math.round(15*UI)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='bottom';
   ctx.lineWidth=3.5*UI;ctx.strokeStyle='rgba(14,17,22,.9)';ctx.strokeText(o.txt,p.x,p.y-20*UI-up);
@@ -690,7 +772,7 @@ function drawPops(){pops.forEach(o=>{const p=m2p(o.x,o.y),up=o.t*26,al=Math.max(
 function draw(){updUI();drawGrid();
   const p0=m2p(ROOM.x0,ROOM.y0),p1=m2p(ROOM.x0+ROOM.w,ROOM.y0+ROOM.h);
   ctx.save();ctx.beginPath();ctx.rect(p0.x,p0.y,p1.x-p0.x,p1.y-p0.y);ctx.clip();
-  drawCovers();drawRoutes();all().forEach(a=>{if(a.hidden&&!showHidden)return;drawActor(a)});drawRuler();drawPops();ctx.restore()}
+  drawCovers();drawRoutes();all().forEach(a=>{if(a.hidden&&!showHidden)return;drawActor(a)});drawFire();drawRuler();drawPops();ctx.restore()}
 function drawRuler(){if(!ruler)return;const a=m2p(ruler.a.x,ruler.a.y);
   ctx.fillStyle='#f0c583';ctx.beginPath();ctx.arc(a.x,a.y,4,0,7);ctx.fill();
   if(!ruler.b){ctx.font='10px system-ui';ctx.textAlign='left';ctx.textBaseline='bottom';
@@ -955,7 +1037,7 @@ document.getElementById('mWalk').onclick=()=>setPtMode('walk');
 document.getElementById('mSprint').onclick=()=>setPtMode('sprint');
 document.getElementById('stStand').onclick=()=>setStance(false);
 document.getElementById('stCrouch').onclick=()=>setStance(true);
-document.getElementById('play').onclick=()=>{resetRun();playing=true;addEvent('Старт.')};
+document.getElementById('play').onclick=()=>{initAudio();resetRun();playing=true;addEvent('Старт.')};
 document.getElementById('stopBtn').onclick=()=>{playing=false};
 document.getElementById('clrAll').onclick=()=>{histPush();all().forEach(a=>a.route=[]);resetRun();refreshChips()};
 document.getElementById('wipeAll').onclick=()=>{if(!confirm('Прибрати всі фігури і перешкоди?'))return;
@@ -1005,6 +1087,10 @@ document.getElementById('hidBtn').onclick=()=>{showHidden=!showHidden;
   const b=document.getElementById('hidBtn');b.classList.toggle('on',showHidden);
   b.textContent=showHidden?'👁 Приховані: видно':'🚫 Приховані: сховані';
   flash(showHidden?'приховані показані — режим інструктора':'приховані сховані — так це побачить курсант')};
+document.getElementById('sndBtn').onclick=()=>{sndOn=!sndOn;
+  const b=document.getElementById('sndBtn');b.classList.toggle('on',sndOn);
+  b.textContent=sndOn?'🔊 Звук':'🔇 Без звуку';
+  if(sndOn){initAudio();shotSound()}};
 document.getElementById('secBtn').onclick=()=>{secMode=(secMode+1)%3;
   document.getElementById('secBtn').textContent='Сектори: '+['всі','обрана','немає'][secMode]};
 document.getElementById('zIn').onclick=()=>setZoom(ZOOM*1.3);
